@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USERNAME=flocci_user
+      - DATABASE_PASSWORD=flocci_password
+      - DATABASE_NAME=flocci_invoices
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - JWT_SECRET=dev-jwt-secret-change-in-production
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=flocci_user
+      - POSTGRES_PASSWORD=flocci_password
+      - POSTGRES_DB=flocci_invoices
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./flocci-invoices-schema-design.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=flocci
+      - RABBITMQ_DEFAULT_PASS=flocci_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
+
+networks:
+  default:
+    name: flocci-network
