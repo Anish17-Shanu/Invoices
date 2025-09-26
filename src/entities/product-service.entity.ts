@@ -30,13 +30,14 @@ export class ProductService {
   @Column({ length: 8, nullable: true })
   hsnSacCode: string;
 
-  @Column('decimal', { precision: 15, scale: 2 })
+  @Column('decimal', { precision: 15, scale: 2, default: 0 })
   unitPrice: number;
 
-  @Column('decimal', { precision: 5, scale: 2 })
+  @Column('decimal', { precision: 5, scale: 2, default: 0 })
   gstRatePercent: number;
 
   @Column({ default: true })
+  @Index()
   isActive: boolean;
 
   // Relationships

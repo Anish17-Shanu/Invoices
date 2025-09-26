@@ -4,15 +4,19 @@ import {
   IsUUID, 
   IsDateString, 
   IsEnum, 
-  IsNumber, 
   IsOptional, 
   ValidateNested, 
   IsArray, 
-  ArrayMinSize 
+  ArrayMinSize, 
+  IsNumber, 
+  IsObject, 
+  IsIn
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { InvoiceStatus } from '../../../common/enums';
+import { PaymentResponseDto } from '../../payments/dto/payment.dto';
 
+// 🔹 Invoice Item (Input DTO)
 export class CreateInvoiceItemDto {
   @ApiProperty({ description: 'Product ID (optional, for catalog items)', required: false })
   @IsOptional()
@@ -35,8 +39,14 @@ export class CreateInvoiceItemDto {
   @ApiProperty({ description: 'Rate per unit' })
   @IsNumber({ maxDecimalPlaces: 2 })
   rate: number;
+
+  @ApiProperty({ description: 'GST rate percent (optional)', required: false, example: 18 })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  gstRatePercent?: number;
 }
 
+// 🔹 Invoice Create DTO
 export class CreateInvoiceDto {
   @ApiProperty({ description: 'Business partner ID' })
   @IsUUID()
@@ -72,6 +82,7 @@ export class CreateInvoiceDto {
   items: CreateInvoiceItemDto[];
 }
 
+// 🔹 Invoice Update DTO
 export class UpdateInvoiceDto {
   @ApiProperty({ description: 'Business partner ID', required: false })
   @IsOptional()
@@ -110,10 +121,17 @@ export class UpdateInvoiceDto {
   @ValidateNested({ each: true })
   @Type(() => CreateInvoiceItemDto)
   items?: CreateInvoiceItemDto[];
+
+  @ApiProperty({ description: 'Invoice status', required: false, enum: InvoiceStatus })
+  @IsOptional()
+  @IsEnum(InvoiceStatus)
+  status?: InvoiceStatus;
 }
 
+// 🔹 Invoice Item Response DTO
 export class InvoiceItemResponseDto {
   @ApiProperty({ description: 'Item ID' })
+  @IsUUID()
   itemId: string;
 
   @ApiProperty({ description: 'Product ID', required: false })
@@ -138,6 +156,7 @@ export class InvoiceItemResponseDto {
   lineTotal: number;
 }
 
+// 🔹 Invoice Response DTO
 export class InvoiceResponseDto {
   @ApiProperty({ description: 'Invoice ID' })
   invoiceId: string;
@@ -192,8 +211,15 @@ export class InvoiceResponseDto {
 
   @ApiProperty({ description: 'Invoice items', type: [InvoiceItemResponseDto] })
   items: InvoiceItemResponseDto[];
+
+  @ApiProperty({ description: 'Payments for this invoice', required: false, type: () => [PaymentResponseDto] })
+  payments?: PaymentResponseDto[];
+
+  @ApiProperty({ description: 'Partner details (summary)', required: false })
+  partner?: { partnerId: string; name: string; type: string };
 }
 
+// 🔹 Invoice Query DTO
 export class InvoiceQueryDto {
   @ApiProperty({ description: 'Filter by status', enum: InvoiceStatus, required: false })
   @IsOptional()
@@ -215,25 +241,22 @@ export class InvoiceQueryDto {
   @IsDateString()
   toDate?: string;
 
-  @ApiProperty({ description: 'Sort by field', required: false, default: 'createdAt' })
+  @ApiProperty({ description: 'Sort by field', required: false, enum: ['createdAt', 'issueDate', 'dueDate', 'totalAmount'], default: 'createdAt' })
   @IsOptional()
-  @IsString()
-  sortBy?: string = 'createdAt';
+  sortBy?: 'createdAt' | 'issueDate' | 'dueDate' | 'totalAmount' = 'createdAt';
 
   @ApiProperty({ description: 'Sort order', required: false, enum: ['ASC', 'DESC'], default: 'DESC' })
   @IsOptional()
-  @IsEnum(['ASC', 'DESC'])
+  @IsIn(['ASC', 'DESC'])
   sortOrder?: 'ASC' | 'DESC' = 'DESC';
 
   @ApiProperty({ description: 'Page number (1-based)', required: false, default: 1 })
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
-  @IsNumber()
   page?: number = 1;
 
   @ApiProperty({ description: 'Number of items per page', required: false, default: 10 })
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
-  @IsNumber()
   limit?: number = 10;
 }

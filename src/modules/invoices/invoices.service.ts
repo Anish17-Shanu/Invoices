@@ -1,9 +1,17 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Invoice, InvoiceItem } from '../../entities';
+import { Invoice, InvoiceItem, ProductService } from '../../entities';
 import { CreateInvoiceDto, UpdateInvoiceDto, InvoiceQueryDto } from './dto/invoice.dto';
 import { InvoiceStatus } from '../../common/enums';
+import { EventService } from '../event/event.service';
+import { AppEvent } from '../../common/enums/app-event.enum';
 
 @Injectable()
 export class InvoicesService {
@@ -12,30 +20,63 @@ export class InvoicesService {
   constructor(
     @InjectRepository(Invoice)
     private invoiceRepository: Repository<Invoice>,
+
     @InjectRepository(InvoiceItem)
     private invoiceItemRepository: Repository<InvoiceItem>,
+
+    @InjectRepository(ProductService)
+    private productRepository: Repository<ProductService>,
+
+    private eventService: EventService,
   ) {}
 
+  // -------------------- CREATE INVOICE --------------------
   async create(organizationId: string, createInvoiceDto: CreateInvoiceDto): Promise<Invoice> {
     const { items, ...invoiceData } = createInvoiceDto;
-    
-    // Calculate totals
+
     let subtotal = 0;
     let totalTax = 0;
-    
-    const invoiceItems = items.map(item => {
-      const lineTotal = item.quantity * item.rate;
-      const taxAmount = lineTotal * 0.18; // Assuming 18% GST, should be dynamic
-      subtotal += lineTotal;
-      totalTax += taxAmount;
-      
-      return this.invoiceItemRepository.create({
-        ...item,
-        taxAmount,
-        lineTotal: lineTotal + taxAmount,
-      });
-    });
-    
+
+    const invoiceItems = await Promise.all(
+      items.map(async (item) => {
+        const lineTotal = item.quantity * item.rate;
+
+        if (item.productId) {
+          const product = await this.productRepository.findOne({
+            where: { productId: item.productId, organizationId },
+          });
+
+          if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
+
+          const taxAmount = (lineTotal * Number(product.gstRatePercent)) / 100;
+          subtotal += lineTotal;
+          totalTax += taxAmount;
+
+          return this.invoiceItemRepository.create({
+            ...item,
+            description: product.description ?? item.description,
+            hsnSacCode: product.hsnSacCode,
+            taxAmount,
+            lineTotal: lineTotal + taxAmount,
+          });
+        } else if (item.gstRatePercent) {
+          const taxAmount = (lineTotal * item.gstRatePercent) / 100;
+          subtotal += lineTotal;
+          totalTax += taxAmount;
+
+          return this.invoiceItemRepository.create({
+            ...item,
+            taxAmount,
+            lineTotal: lineTotal + taxAmount,
+          });
+        } else {
+          throw new BadRequestException(
+            'Each item must have either a productId or a gstRatePercent defined',
+          );
+        }
+      }),
+    );
+
     const invoice = this.invoiceRepository.create({
       ...invoiceData,
       organizationId,
@@ -45,45 +86,47 @@ export class InvoicesService {
       status: InvoiceStatus.DRAFT,
       items: invoiceItems,
     });
-    
+
     const saved = await this.invoiceRepository.save(invoice);
     this.logger.log(`Created invoice: ${saved.invoiceId}`);
-    
-    return this.findOne(organizationId, saved.invoiceId);
+
+    const fullInvoice = await this.findOne(organizationId, saved.invoiceId);
+
+    // Emit event after creation
+    this.eventService.emit(AppEvent.INVOICE_CREATED, { invoiceId: saved.invoiceId, organizationId });
+
+    return fullInvoice;
   }
 
+  // -------------------- GET ALL INVOICES --------------------
   async findAll(organizationId: string, query: InvoiceQueryDto) {
-    const { page = 1, limit = 10, status, partnerId, fromDate, toDate, sortBy = 'createdAt', sortOrder = 'DESC' } = query;
-    
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      partnerId,
+      fromDate,
+      toDate,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+    } = query;
+
     const queryBuilder = this.invoiceRepository
       .createQueryBuilder('invoice')
       .leftJoinAndSelect('invoice.partner', 'partner')
       .leftJoinAndSelect('invoice.items', 'items')
+      .leftJoinAndSelect('invoice.payments', 'payments')
       .where('invoice.organizationId = :organizationId', { organizationId });
-    
-    if (status) {
-      queryBuilder.andWhere('invoice.status = :status', { status });
-    }
-    
-    if (partnerId) {
-      queryBuilder.andWhere('invoice.partnerId = :partnerId', { partnerId });
-    }
-    
-    if (fromDate) {
-      queryBuilder.andWhere('invoice.issueDate >= :fromDate', { fromDate });
-    }
-    
-    if (toDate) {
-      queryBuilder.andWhere('invoice.issueDate <= :toDate', { toDate });
-    }
-    
-    queryBuilder
-      .orderBy(`invoice.${sortBy}`, sortOrder)
-      .skip((page - 1) * limit)
-      .take(limit);
-    
+
+    if (status) queryBuilder.andWhere('invoice.status = :status', { status });
+    if (partnerId) queryBuilder.andWhere('invoice.partnerId = :partnerId', { partnerId });
+    if (fromDate) queryBuilder.andWhere('invoice.issueDate >= :fromDate', { fromDate });
+    if (toDate) queryBuilder.andWhere('invoice.issueDate <= :toDate', { toDate });
+
+    queryBuilder.orderBy(`invoice.${sortBy}`, sortOrder).skip((page - 1) * limit).take(limit);
+
     const [invoices, total] = await queryBuilder.getManyAndCount();
-    
+
     return {
       data: invoices,
       meta: {
@@ -95,53 +138,81 @@ export class InvoicesService {
     };
   }
 
+  // -------------------- GET SINGLE INVOICE --------------------
   async findOne(organizationId: string, invoiceId: string): Promise<Invoice> {
     const invoice = await this.invoiceRepository.findOne({
       where: { invoiceId, organizationId },
       relations: ['partner', 'items', 'payments'],
     });
 
-    if (!invoice) {
-      throw new NotFoundException(`Invoice with ID ${invoiceId} not found`);
-    }
-
+    if (!invoice) throw new NotFoundException(`Invoice with ID ${invoiceId} not found`);
     return invoice;
   }
 
-  async update(organizationId: string, invoiceId: string, updateInvoiceDto: UpdateInvoiceDto): Promise<Invoice> {
+  // -------------------- UPDATE INVOICE --------------------
+  async update(
+    organizationId: string,
+    invoiceId: string,
+    updateInvoiceDto: UpdateInvoiceDto,
+  ): Promise<Invoice> {
     const invoice = await this.findOne(organizationId, invoiceId);
-    
+
     if (invoice.status !== InvoiceStatus.DRAFT) {
-      throw new Error('Only draft invoices can be updated');
+      throw new BadRequestException('Only draft invoices can be updated');
     }
-    
-    // If items are provided, recalculate totals
+
     if (updateInvoiceDto.items) {
       const { items, ...invoiceData } = updateInvoiceDto;
-      
-      // Remove existing items
+
       await this.invoiceItemRepository.delete({ invoiceId });
-      
-      // Recalculate totals
+
       let subtotal = 0;
       let totalTax = 0;
-      
-      const invoiceItems = items.map(item => {
-        const lineTotal = item.quantity * item.rate;
-        const taxAmount = lineTotal * 0.18;
-        subtotal += lineTotal;
-        totalTax += taxAmount;
-        
-        return this.invoiceItemRepository.create({
-          ...item,
-          invoiceId,
-          taxAmount,
-          lineTotal: lineTotal + taxAmount,
-        });
-      });
-      
+
+      const invoiceItems = await Promise.all(
+        items.map(async (item) => {
+          const lineTotal = item.quantity * item.rate;
+
+          if (item.productId) {
+            const product = await this.productRepository.findOne({
+              where: { productId: item.productId, organizationId },
+            });
+
+            if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
+
+            const taxAmount = (lineTotal * Number(product.gstRatePercent)) / 100;
+            subtotal += lineTotal;
+            totalTax += taxAmount;
+
+            return this.invoiceItemRepository.create({
+              ...item,
+              invoiceId,
+              description: product.description ?? item.description,
+              hsnSacCode: product.hsnSacCode,
+              taxAmount,
+              lineTotal: lineTotal + taxAmount,
+            });
+          } else if (item.gstRatePercent) {
+            const taxAmount = (lineTotal * item.gstRatePercent) / 100;
+            subtotal += lineTotal;
+            totalTax += taxAmount;
+
+            return this.invoiceItemRepository.create({
+              ...item,
+              invoiceId,
+              taxAmount,
+              lineTotal: lineTotal + taxAmount,
+            });
+          } else {
+            throw new BadRequestException(
+              'Each item must have either a productId or a gstRatePercent defined',
+            );
+          }
+        }),
+      );
+
       await this.invoiceItemRepository.save(invoiceItems);
-      
+
       Object.assign(invoice, {
         ...invoiceData,
         subtotal,
@@ -151,40 +222,44 @@ export class InvoicesService {
     } else {
       Object.assign(invoice, updateInvoiceDto);
     }
-    
+
     const updated = await this.invoiceRepository.save(invoice);
     this.logger.log(`Updated invoice: ${invoiceId}`);
-    
+
+    this.eventService.emit(AppEvent.INVOICE_UPDATED, { invoiceId, organizationId });
+
     return this.findOne(organizationId, invoiceId);
   }
 
+  // -------------------- SEND INVOICE --------------------
   async sendInvoice(organizationId: string, invoiceId: string): Promise<Invoice> {
     const invoice = await this.findOne(organizationId, invoiceId);
-    
+
     if (invoice.status !== InvoiceStatus.DRAFT) {
-      throw new Error('Only draft invoices can be sent');
+      throw new BadRequestException('Only draft invoices can be sent');
     }
-    
+
     invoice.status = InvoiceStatus.SENT;
     await this.invoiceRepository.save(invoice);
-    
     this.logger.log(`Sent invoice: ${invoiceId}`);
-    
-    // TODO: Publish event
-    
+
+    this.eventService.emit(AppEvent.INVOICE_SENT, { invoiceId, organizationId });
+
     return invoice;
   }
 
+  // -------------------- VOID INVOICE --------------------
   async voidInvoice(organizationId: string, invoiceId: string): Promise<void> {
     const invoice = await this.findOne(organizationId, invoiceId);
-    
+
     if (invoice.status === InvoiceStatus.PAID) {
-      throw new Error('Paid invoices cannot be voided');
+      throw new ConflictException('Paid invoices cannot be voided');
     }
-    
+
     invoice.status = InvoiceStatus.VOID;
     await this.invoiceRepository.save(invoice);
-    
     this.logger.log(`Voided invoice: ${invoiceId}`);
+
+    this.eventService.emit(AppEvent.INVOICE_VOIDED, { invoiceId, organizationId });
   }
 }

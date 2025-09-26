@@ -28,7 +28,7 @@ export class Organization {
   @PrimaryGeneratedColumn('uuid')
   organizationId: string;
 
-  @Column('uuid')
+  @Column('uuid', { nullable: true, unique: true })
   @Index()
   workspaceId: string;
 
@@ -38,13 +38,20 @@ export class Organization {
   @Column({ length: 255, nullable: true })
   legalName: string;
 
+  @Column({
+    type: 'enum',
+    enum: OrganizationType,
+    nullable: true,
+  })
+  type: OrganizationType;
+
   @Column({ length: 15, unique: true })
   gstin: string;
 
   @Column({ length: 10, unique: true })
   pan: string;
 
-  @Column('jsonb', { nullable: true })
+  @Column('jsonb', { nullable: true, default: {} })
   address: Address;
 
   @CreateDateColumn({ type: 'timestamptz' })
@@ -72,3 +79,4 @@ export class Organization {
   @OneToMany(() => GstrFiling, (filing) => filing.organization)
   gstrFilings: GstrFiling[];
 }
+

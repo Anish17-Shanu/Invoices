@@ -1,7 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsDateString, IsEnum, IsOptional, IsObject, ValidateNested } from 'class-validator';
+import { 
+  IsString, 
+  IsDateString, 
+  IsEnum, 
+  IsOptional, 
+  IsObject, 
+  ValidateNested, 
+  Length 
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { GstrFilingType } from '../../../common/enums';
+
+// 🔹 Optional: Enum for E-Way Bill status
+export enum EwayBillStatus {
+  ACTIVE = 'active',
+  EXPIRED = 'expired',
+  CANCELLED = 'cancelled',
+}
 
 export class VehicleDetailsDto {
   @ApiProperty({ description: 'Vehicle number' })
@@ -20,14 +35,19 @@ export class VehicleDetailsDto {
   @IsDateString()
   transporterDocDate: string;
 
-  @ApiProperty({ description: 'Transport mode' })
+  @ApiProperty({ description: 'Transport mode (e.g., road, rail, air, ship)' })
   @IsString()
   transportMode: string;
 }
 
 export class CreateEwayBillDto {
-  @ApiProperty({ description: 'E-Way Bill number' })
+  @ApiProperty({ description: 'Invoice ID' })
   @IsString()
+  invoiceId: string; // Add this property
+
+  @ApiProperty({ description: 'E-Way Bill number (max 50 chars)' })
+  @IsString()
+  @Length(1, 50)
   ewbNumber: string;
 
   @ApiProperty({ description: 'Valid from date (YYYY-MM-DD)' })
@@ -45,10 +65,10 @@ export class CreateEwayBillDto {
   @Type(() => VehicleDetailsDto)
   vehicleDetails?: VehicleDetailsDto;
 
-  @ApiProperty({ description: 'E-Way Bill status', required: false })
+  @ApiProperty({ description: 'E-Way Bill status', required: false, enum: EwayBillStatus })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(EwayBillStatus)
+  status?: EwayBillStatus;
 }
 
 export class EwayBillResponseDto {
@@ -67,11 +87,11 @@ export class EwayBillResponseDto {
   @ApiProperty({ description: 'Valid until' })
   validUntil: Date;
 
-  @ApiProperty({ description: 'Vehicle details', required: false })
+  @ApiProperty({ description: 'Vehicle details', required: false, type: VehicleDetailsDto })
   vehicleDetails?: VehicleDetailsDto;
 
-  @ApiProperty({ description: 'Status', required: false })
-  status?: string;
+  @ApiProperty({ description: 'Status', required: false, enum: EwayBillStatus })
+  status?: EwayBillStatus;
 
   @ApiProperty({ description: 'Created at' })
   createdAt: Date;
@@ -82,7 +102,7 @@ export class GenerateGstrDto {
   @IsEnum(GstrFilingType)
   type: GstrFilingType;
 
-  @ApiProperty({ description: 'Period in YYYY-MM format' })
+  @ApiProperty({ description: 'Period in YYYY-MM format', example: '2025-09' })
   @IsString()
   period: string;
 }
@@ -97,14 +117,14 @@ export class GstrFilingResponseDto {
   @ApiProperty({ description: 'Filing type', enum: GstrFilingType })
   type: GstrFilingType;
 
-  @ApiProperty({ description: 'Period' })
+  @ApiProperty({ description: 'Period (YYYY-MM)' })
   period: string;
 
-  @ApiProperty({ description: 'Filing status' })
+  @ApiProperty({ description: 'Filing status (pending/filed/error)' })
   status: string;
 
-  @ApiProperty({ description: 'Generated payload', required: false })
-  payload?: any;
+  @ApiProperty({ description: 'Generated payload (JSON)', required: false })
+  payload?: Record<string, any>;
 
   @ApiProperty({ description: 'Filed at', required: false })
   filedAt?: Date;

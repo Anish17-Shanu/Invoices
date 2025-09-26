@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   OneToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Invoice } from './invoice.entity';
 
@@ -22,9 +23,11 @@ export class EwayBill {
   ewbId: string;
 
   @Column('uuid', { unique: true })
+  @Index()
   invoiceId: string;
 
   @Column({ length: 50, unique: true })
+  @Index()
   ewbNumber: string;
 
   @Column('timestamptz')
@@ -33,11 +36,11 @@ export class EwayBill {
   @Column('timestamptz')
   validUntil: Date;
 
-  @Column('jsonb', { nullable: true })
+  @Column('jsonb', { nullable: true, default: {} })
   vehicleDetails: VehicleDetails;
 
   @Column({ length: 20, nullable: true })
-  status: string;
+  status: string; // e.g., "active", "expired", "cancelled"
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

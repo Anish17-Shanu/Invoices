@@ -5,16 +5,20 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Unique,
+  Index,
 } from 'typeorm';
 import { GstrFilingType, GstrFilingStatus } from '../common/enums';
 import { Organization } from './organization.entity';
 
 @Entity('gstr_filings')
+@Unique(['organizationId', 'type', 'period'])
 export class GstrFiling {
   @PrimaryGeneratedColumn('uuid')
   filingId: string;
 
   @Column('uuid')
+  @Index()
   organizationId: string;
 
   @Column({
@@ -31,10 +35,11 @@ export class GstrFiling {
     enum: GstrFilingStatus,
     default: GstrFilingStatus.PENDING,
   })
+  @Index()
   status: GstrFilingStatus;
 
   @Column('jsonb', { nullable: true })
-  payload: any; // The generated JSON for upload
+  payload: Record<string, any>; // Generated JSON for upload
 
   @Column('timestamptz', { nullable: true })
   filedAt: Date;
@@ -49,3 +54,5 @@ export class GstrFiling {
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
 }
+export { GstrFilingStatus };
+

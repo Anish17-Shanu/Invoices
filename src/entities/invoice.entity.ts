@@ -49,16 +49,16 @@ export class Invoice {
   @Index()
   status: InvoiceStatus;
 
-  @Column('decimal', { precision: 15, scale: 2 })
+  @Column('decimal', { precision: 15, scale: 2, default: 0 })
   subtotal: number;
 
-  @Column('decimal', { precision: 15, scale: 2 })
+  @Column('decimal', { precision: 15, scale: 2, default: 0 })
   totalTax: number;
 
-  @Column('decimal', { precision: 15, scale: 2 })
+  @Column('decimal', { precision: 15, scale: 2, default: 0 })
   totalAmount: number;
 
-  @Column('decimal', { precision: 15, scale: 2, default: 0.00 })
+  @Column('decimal', { precision: 15, scale: 2, default: 0 })
   amountPaid: number;
 
   @Column({ length: 64, nullable: true })
@@ -90,7 +90,11 @@ export class Invoice {
   @JoinColumn({ name: 'partnerId' })
   partner: BusinessPartner;
 
-  @OneToMany(() => InvoiceItem, (item) => item.invoice, { cascade: true })
+  @OneToMany(() => InvoiceItem, (item) => item.invoice, { 
+    cascade: true, 
+    eager: false, 
+    orphanedRowAction: 'delete' 
+  })
   items: InvoiceItem[];
 
   @OneToMany(() => Payment, (payment) => payment.invoice)

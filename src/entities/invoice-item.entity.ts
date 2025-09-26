@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Invoice } from './invoice.entity';
 import { ProductService } from './product-service.entity';
@@ -14,9 +15,11 @@ export class InvoiceItem {
   itemId: string;
 
   @Column('uuid')
+  @Index()
   invoiceId: string;
 
   @Column('uuid', { nullable: true })
+  @Index()
   productId: string;
 
   @Column('text')
@@ -31,10 +34,10 @@ export class InvoiceItem {
   @Column('decimal', { precision: 12, scale: 2 })
   rate: number;
 
-  @Column('decimal', { precision: 12, scale: 2 })
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
   taxAmount: number;
 
-  @Column('decimal', { precision: 15, scale: 2 })
+  @Column('decimal', { precision: 15, scale: 2, default: 0 })
   lineTotal: number;
 
   // Relationships

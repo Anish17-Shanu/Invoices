@@ -1,22 +1,31 @@
+// src/entities/user.entity.ts
 import {
   Entity,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   JoinColumn,
   Unique,
+  Index,
 } from 'typeorm';
 import { UserRole } from '../common/enums';
 import { Organization } from './organization.entity';
 
 @Entity('users')
-@Unique(['userId', 'organizationId'])
+@Unique(['email', 'organizationId']) // Ensure unique email per organization
 export class User {
-  @PrimaryColumn('uuid')
-  userId: string; // Must match the Flocci OS User ID from JWT
+  @PrimaryGeneratedColumn('uuid')
+  userId: string;
 
   @Column('uuid')
+  @Index()
   organizationId: string;
+
+  @Column({ unique: true })
+  email: string;
+
+  @Column()
+  password: string;
 
   @Column({
     type: 'enum',

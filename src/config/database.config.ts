@@ -6,5 +6,6 @@ export default registerAs('database', () => ({
   username: process.env.DATABASE_USERNAME || 'flocci_user',
   password: process.env.DATABASE_PASSWORD || 'flocci_password',
   database: process.env.DATABASE_NAME || 'flocci_invoices',
+  schema: 'flocci',
   ssl: process.env.DATABASE_SSL === 'true',
 }));

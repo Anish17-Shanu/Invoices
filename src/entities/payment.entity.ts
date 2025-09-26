@@ -6,12 +6,14 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  Unique,
 } from 'typeorm';
 import { PaymentMode } from '../common/enums';
 import { Invoice } from './invoice.entity';
 import { Organization } from './organization.entity';
 
 @Entity('payments')
+@Unique(['organizationId', 'transactionId'])
 export class Payment {
   @PrimaryGeneratedColumn('uuid')
   paymentId: string;
@@ -21,9 +23,10 @@ export class Payment {
   invoiceId: string;
 
   @Column('uuid')
+  @Index()
   organizationId: string;
 
-  @Column('decimal', { precision: 15, scale: 2 })
+  @Column('decimal', { precision: 15, scale: 2, default: 0 })
   amount: number;
 
   @Column('date')
@@ -45,7 +48,9 @@ export class Payment {
   createdAt: Date;
 
   // Relationships
-  @ManyToOne(() => Invoice, (invoice) => invoice.payments)
+  @ManyToOne(() => Invoice, (invoice) => invoice.payments, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'invoiceId' })
   invoice: Invoice;
 

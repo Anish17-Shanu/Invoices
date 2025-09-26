@@ -26,8 +26,12 @@
       "@/modules/*": ["src/modules/*"],
       "@/common/*": ["src/common/*"],
       "@/config/*": ["src/config/*"]
-    }
+    },
+    "types": [
+      "jest",
+      "node"
+    ]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
 }
