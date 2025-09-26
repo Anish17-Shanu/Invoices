@@ -28,9 +28,14 @@ export class Organization {
   @PrimaryGeneratedColumn('uuid')
   organizationId: string;
 
+  // Keep workspaceId as a pure UUID
   @Column('uuid', { nullable: true, unique: true })
   @Index()
   workspaceId: string;
+
+  // New column for custom ORG-xxxx codes
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
+  workspaceCode: string;
 
   @Column({ length: 255 })
   name: string;
@@ -79,4 +84,3 @@ export class Organization {
   @OneToMany(() => GstrFiling, (filing) => filing.organization)
   gstrFilings: GstrFiling[];
 }
-

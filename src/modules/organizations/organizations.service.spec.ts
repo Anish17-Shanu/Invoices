@@ -17,6 +17,7 @@ describe('OrganizationsService', () => {
   const mockOrganization: Organization = {
     organizationId: '123e4567-e89b-12d3-a456-426614174000',
     workspaceId: '123e4567-e89b-12d3-a456-426614174001',
+    workspaceCode: 'ORG-123e4567-e89b-12d3-a456-426614174000-123abc',
     name: 'Test Organization',
     legalName: 'Test Organization Ltd.',
     gstin: '12ABCDE1234F1Z5',
@@ -84,16 +85,16 @@ describe('OrganizationsService', () => {
     it('should create a new organization and emit event', async () => {
       mockRepository.create.mockReturnValue(mockOrganization);
       mockRepository.save
-        .mockResolvedValueOnce({ ...mockOrganization, workspaceId: null }) // first save without workspaceId
-        .mockResolvedValueOnce(mockOrganization); // second save with workspaceId
+        .mockResolvedValueOnce({ ...mockOrganization, workspaceCode: null }) // first save
+        .mockResolvedValueOnce(mockOrganization); // second save with workspaceCode
 
       const result = await service.create(createDto);
 
-      expect(mockRepository.create).toHaveBeenCalledWith(createDto);
+      expect(mockRepository.create).toHaveBeenCalledWith(expect.objectContaining(createDto));
       expect(mockRepository.save).toHaveBeenCalledTimes(2);
       expect(eventService.emit).toHaveBeenCalledWith(AppEvent.PARTNER_CREATED, {
         organizationId: mockOrganization.organizationId,
-        workspaceId: mockOrganization.workspaceId,
+        workspaceCode: mockOrganization.workspaceCode,
         name: mockOrganization.name,
       });
       expect(result).toEqual(mockOrganization);
@@ -120,9 +121,10 @@ describe('OrganizationsService', () => {
       mockRepository.createQueryBuilder.mockReturnValue(qb);
 
       const query: OrganizationQueryDto = {
-        page: 1, limit: 10,
-        sortBy: '',
-        sortOrder: 'DESC'
+        page: 1,
+        limit: 10,
+        sortBy: 'createdAt',
+        sortOrder: 'DESC',
       };
       const result = await service.findAll(query);
 
@@ -152,14 +154,14 @@ describe('OrganizationsService', () => {
   });
 
   describe('findByWorkspace', () => {
-    it('should return organizations for a workspace', async () => {
+    it('should return organizations for a workspaceCode', async () => {
       mockRepository.find.mockResolvedValue([mockOrganization]);
 
-      const result = await service.findByWorkspace(mockOrganization.workspaceId);
+      const result = await service.findByWorkspace(mockOrganization.workspaceCode);
 
       expect(result).toEqual([mockOrganization]);
       expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { workspaceId: mockOrganization.workspaceId },
+        where: { workspaceCode: mockOrganization.workspaceCode },
         order: { createdAt: 'DESC' },
       });
     });

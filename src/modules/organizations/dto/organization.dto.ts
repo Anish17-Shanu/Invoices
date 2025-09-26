@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsObject, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, IsObject, ValidateNested, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AddressDto {
@@ -54,7 +54,6 @@ export class CreateOrganizationDto {
   address?: AddressDto;
 }
 
-
 export class UpdateOrganizationDto {
   @ApiProperty({ description: 'Organization name', required: false })
   @IsOptional()
@@ -88,8 +87,11 @@ export class OrganizationResponseDto {
   @ApiProperty({ description: 'Organization ID' })
   organizationId: string;
 
-  @ApiProperty({ description: 'Workspace ID (auto-generated)' })
+  @ApiProperty({ description: 'Workspace ID (internal UUID)' })
   workspaceId: string;
+
+  @ApiProperty({ description: 'Workspace Code (external ORG-xxxx)' })
+  workspaceCode: string; // 🔥 Always present now
 
   @ApiProperty({ description: 'Organization name' })
   name: string;
@@ -119,9 +121,15 @@ export class OrganizationQueryDto {
   @IsString()
   search?: string;
 
-  @ApiProperty({ description: 'Filter by Workspace ID', required: false })
+  @ApiProperty({ description: 'Filter by Workspace ID (internal UUID)', required: false })
   @IsOptional()
+  @IsUUID()
   workspaceId?: string;
+
+  @ApiProperty({ description: 'Filter by Workspace Code (external ORG-xxxx)', required: false })
+  @IsOptional()
+  @IsString()
+  workspaceCode?: string;
 
   @ApiProperty({ description: 'Sort by field', required: false, default: 'createdAt' })
   @IsOptional()
