@@ -1,18 +1,26 @@
-// src/common/interfaces/auth.interface.ts
 import { UserRole } from '../enums';
 
+/**
+ * Payload structure for JWT tokens
+ */
 export interface JwtPayload {
-  /** Unique user ID from Flocci OS (JWT subject) */
-  userId: string;
+  /** Unique user ID (JWT subject) */
+  sub: string;
+
+  /** User email */
+  email: string;
+
+  /** Single primary role for the user */
+  role: UserRole;
 
   /** Workspace the user belongs to */
   workspaceId: string;
 
-  /** Organization the user is currently scoped to */
+  /** Organization the user is currently scoped to (optional) */
   organizationId?: string;
 
-  /** User roles (from JWT). Can be multiple if cross-org */
-  roles: UserRole[];
+  /** Multiple roles if cross-org access is allowed (optional) */
+  roles?: UserRole[];
 
   /** JWT issued at timestamp */
   iat?: number;
@@ -21,13 +29,26 @@ export interface JwtPayload {
   exp?: number;
 }
 
-export interface RequestUser extends JwtPayload {
-  /** Active role for this request context (resolved from roles[]) */
+/**
+ * Extends JwtPayload for request context
+ */
+export interface RequestUser {
+  /** Map JWT sub to userId */
+  userId: string;
+
+  email: string;
   role: UserRole;
 
-  /** Optional email for convenience */
-  email?: string;
+  /** Multiple roles for cross-org */
+  roles: UserRole[];
+
+  workspaceId: string;
+  organizationId?: string;
 
   /** Optional display name */
   name?: string;
+
+  iat?: number;
+  exp?: number;
 }
+

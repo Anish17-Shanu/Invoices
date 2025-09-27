@@ -1,16 +1,8 @@
+// src/modules/invoices/dto/invoice.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { 
-  IsString, 
-  IsUUID, 
-  IsDateString, 
-  IsEnum, 
-  IsOptional, 
-  ValidateNested, 
-  IsArray, 
-  ArrayMinSize, 
-  IsNumber, 
-  IsObject, 
-  IsIn
+  IsString, IsUUID, IsDateString, IsEnum, IsOptional, ValidateNested, 
+  IsArray, ArrayMinSize, IsNumber, IsIn 
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { InvoiceStatus } from '../../../common/enums';

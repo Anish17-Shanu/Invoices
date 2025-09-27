@@ -9,10 +9,13 @@ import { BusinessPartner } from '../../entities/business-partner.entity';
 import { Payment } from '../../entities/payment.entity';
 import { EwayBill } from '../../entities/eway-bill.entity';
 import { EventModule } from '../event/event.module';
-import { ProductsServicesModule } from '../products-services/products-services.module'; // ← Import this
+import { ProductsServicesModule } from '../products-services/products-services.module';
+import { ProductsServices } from '../../entities/products-services.entity';
 
 @Module({
   imports: [
+    EventModule,
+    ProductsServicesModule, // import only for service
     TypeOrmModule.forFeature([
       Invoice,
       InvoiceItem,
@@ -20,9 +23,8 @@ import { ProductsServicesModule } from '../products-services/products-services.m
       BusinessPartner,
       Payment,
       EwayBill,
+      ProductsServices,
     ]),
-    EventModule, 
-    ProductsServicesModule, // ← Add here
   ],
   controllers: [InvoicesController],
   providers: [InvoicesService],

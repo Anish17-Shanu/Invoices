@@ -81,6 +81,7 @@ export class UpdateOrganizationDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address?: AddressDto;
+  // ✅ Remove workspaceId from Update DTO
 }
 
 export class OrganizationResponseDto {

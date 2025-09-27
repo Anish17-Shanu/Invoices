@@ -1,30 +1,34 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductService } from '../../entities/product-service.entity';
+import { ProductsServices } from '../../entities/products-services.entity';
 import {
-  CreateProductServiceDto,
+  CreateProductsServicesDto,
   UpdateProductServiceDto,
   ProductServiceResponseDto,
-} from './dto/product-service.dto';
+} from './dto/products-services.dto';
 import { EventService } from '../event/event.service';
 import { AppEvent } from '../../common/enums/app-event.enum';
 
 @Injectable()
 export class ProductsServicesService {
+  private readonly logger = new Logger(ProductsServicesService.name);
+
   constructor(
-    @InjectRepository(ProductService)
-    private readonly productServiceRepo: Repository<ProductService>,
-    private readonly eventService: EventService, // Inject EventService
+    @InjectRepository(ProductsServices)
+    private readonly productServiceRepo: Repository<ProductsServices>,
+    private readonly eventService: EventService,
   ) {}
 
   // -------------------- Create Product/Service --------------------
-  async createProductService(dto: CreateProductServiceDto): Promise<ProductServiceResponseDto> {
+  async createProductService(dto: CreateProductsServicesDto): Promise<ProductServiceResponseDto> {
     const existing = await this.productServiceRepo.findOne({ where: { name: dto.name } });
     if (existing) throw new BadRequestException('Product/Service with this name already exists');
 
     const product = this.productServiceRepo.create(dto);
     await this.productServiceRepo.save(product);
+
+    this.logger.log(`Created Product/Service: ${product.name}`);
 
     // 🔹 Emit event after creation
     this.eventService.emit(AppEvent.PRODUCT_SERVICE_CREATED, {
@@ -40,6 +44,7 @@ export class ProductsServicesService {
   async getProductServiceById(productId: string): Promise<ProductServiceResponseDto> {
     const product = await this.productServiceRepo.findOne({ where: { productId } });
     if (!product) throw new NotFoundException('Product/Service not found');
+
     return this.toResponseDto(product);
   }
 
@@ -53,6 +58,8 @@ export class ProductsServicesService {
 
     Object.assign(product, dto);
     await this.productServiceRepo.save(product);
+
+    this.logger.log(`Updated Product/Service: ${product.name}`);
 
     // 🔹 Emit event after update
     this.eventService.emit(AppEvent.PRODUCT_SERVICE_UPDATED, {
@@ -71,7 +78,7 @@ export class ProductsServicesService {
   }
 
   // -------------------- Helper: Map Entity to Response DTO --------------------
-  private toResponseDto(product: ProductService): ProductServiceResponseDto {
+  private toResponseDto(product: ProductsServices): ProductServiceResponseDto {
     return {
       productId: product.productId,
       organizationId: product.organizationId,

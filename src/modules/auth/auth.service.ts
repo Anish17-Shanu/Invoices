@@ -32,39 +32,33 @@ export class AuthService {
       email: user.email,
       role: user.role,
       organizationId: user.organizationId,
+      roles: [user.role], // array for cross-org scenarios
     };
 
     return { access_token: this.jwtService.sign(payload) };
   }
 
   async register(registerDto: RegisterDto) {
-    // Check duplicate email
     const existing = await this.usersService.findByEmail(registerDto.email);
     if (existing) throw new ConflictException('Email already registered');
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    // Normalize role to enum, default Viewer
-    const role: UserRole =
-      registerDto.role && Object.values(UserRole).includes(registerDto.role)
-        ? registerDto.role
-        : UserRole.VIEWER;
+    const role: UserRole = registerDto.role ?? UserRole.VIEWER;
 
-    // Create user in DB (UsersService will handle org auto-creation if missing)
     const user: User = await this.usersService.createUser({
       email: registerDto.email,
       password: hashedPassword,
       role,
-      organizationId: registerDto.organizationId, // optional
+      organizationId: registerDto.organizationId,
     });
 
-    // Create JWT payload
     const payload = {
       sub: user.userId,
       email: user.email,
       role: user.role,
       organizationId: user.organizationId,
+      roles: [user.role],
     };
 
     return { access_token: this.jwtService.sign(payload), user };

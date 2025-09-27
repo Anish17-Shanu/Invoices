@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProductsServicesService } from './products-services.service';
 import { ProductsServicesController } from './products-services.controller';
-import { ProductService } from '../../entities/product-service.entity';
-import { EventModule } from '../event/event.module';
+import { ProductsServicesService } from './products-services.service';
+import { ProductsServices } from '../../entities/products-services.entity';
+import { EventModule } from '../event/event.module'; // <-- import EventModule
 
 @Module({
   imports: [
-    EventModule, // ✅ Import first
-    TypeOrmModule.forFeature([ProductService]),
+    TypeOrmModule.forFeature([ProductsServices]),
+    EventModule, // <-- makes EventService available for DI
   ],
-  providers: [ProductsServicesService],
   controllers: [ProductsServicesController],
-  exports: [ProductsServicesService, TypeOrmModule],
+  providers: [ProductsServicesService],
+  exports: [ProductsServicesService],
 })
 export class ProductsServicesModule {}

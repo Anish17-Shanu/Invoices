@@ -10,7 +10,7 @@ import {
 import { OrganizationType } from '../common/enums';
 import { User } from './user.entity';
 import { BusinessPartner } from './business-partner.entity';
-import { ProductService } from './product-service.entity';
+import { ProductsServices } from './products-services.entity';
 import { Invoice } from './invoice.entity';
 import { Payment } from './payment.entity';
 import { GstrFiling } from './gstr-filing.entity';
@@ -68,8 +68,8 @@ export class Organization {
   @OneToMany(() => BusinessPartner, (partner) => partner.organization)
   businessPartners: BusinessPartner[];
 
-  @OneToMany(() => ProductService, (product) => product.organization)
-  productsServices: ProductService[];
+  @OneToMany(() => ProductsServices, (product) => product.organization)
+  productsServices: ProductsServices[];
 
   @OneToMany(() => Invoice, (invoice) => invoice.organization)
   invoices: Invoice[];

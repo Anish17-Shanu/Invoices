@@ -7,7 +7,7 @@ import {
   Index,
 } from 'typeorm';
 import { Invoice } from './invoice.entity';
-import { ProductService } from './product-service.entity';
+import { ProductsServices } from './products-services.entity';
 
 @Entity('invoice_items')
 export class InvoiceItem {
@@ -47,9 +47,9 @@ export class InvoiceItem {
   @JoinColumn({ name: 'invoiceId' })
   invoice: Invoice;
 
-  @ManyToOne(() => ProductService, (product) => product.invoiceItems, {
+  @ManyToOne(() => ProductsServices, (product) => product.invoiceItems, {
     nullable: true,
   })
   @JoinColumn({ name: 'productId' })
-  product: ProductService;
+  product: ProductsServices;
 }

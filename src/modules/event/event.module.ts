@@ -6,6 +6,6 @@ import { EventListener } from './event.listener';
 @Module({
   imports: [EventEmitterModule.forRoot({ wildcard: true })],
   providers: [EventService, EventListener],
-  exports: [EventService],
+  exports: [EventService], // <-- Export only EventService
 })
 export class EventModule {}

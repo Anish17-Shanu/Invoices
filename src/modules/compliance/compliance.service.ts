@@ -14,6 +14,7 @@ import {
 } from './dto/compliance.dto';
 import { EventService } from '../event/event.service';
 import { AppEvent } from '../../common/enums/app-event.enum';
+import { RequestUser } from '../../common/interfaces/auth.interface';
 
 @Injectable()
 export class ComplianceService {
@@ -28,7 +29,7 @@ export class ComplianceService {
   ) {}
 
   // -------------------- E-WAY BILL --------------------
-  async createEwayBill(dto: CreateEwayBillDto): Promise<EwayBillResponseDto> {
+  async createEwayBill(dto: CreateEwayBillDto, user: RequestUser): Promise<EwayBillResponseDto> {
     const invoice = await this.invoiceRepo.findOne({ where: { invoiceId: dto.invoiceId } });
     if (!invoice) throw new NotFoundException('Invoice not found');
 
@@ -38,17 +39,18 @@ export class ComplianceService {
     const ewayBill = this.ewayBillRepo.create({ ...dto, invoice });
     await this.ewayBillRepo.save(ewayBill);
 
-    // 🔹 Emit event after E-Way Bill creation
+    // Emit event after E-Way Bill creation
     this.eventService.emit(AppEvent.EWAY_BILL_CREATED, {
       ewbId: ewayBill.ewbId,
       invoiceId: ewayBill.invoiceId,
       organizationId: ewayBill.invoice.organizationId,
+      createdBy: user.userId,
     });
 
     return this.toEwayBillResponseDto(ewayBill);
   }
 
-  async getEwayBillByInvoice(invoiceId: string): Promise<EwayBillResponseDto[]> {
+  async getEwayBillByInvoice(invoiceId: string, user?: RequestUser): Promise<EwayBillResponseDto[]> {
     const invoice = await this.invoiceRepo.findOne({ where: { invoiceId } });
     if (!invoice) throw new NotFoundException('Invoice not found');
 
@@ -56,18 +58,23 @@ export class ComplianceService {
     return bills.map(this.toEwayBillResponseDto);
   }
 
-  async updateEwayBill(ewbId: string, dto: Partial<CreateEwayBillDto>): Promise<EwayBillResponseDto> {
+  async updateEwayBill(
+    ewbId: string,
+    dto: Partial<CreateEwayBillDto>,
+    user: RequestUser,
+  ): Promise<EwayBillResponseDto> {
     const bill = await this.ewayBillRepo.findOne({ where: { ewbId }, relations: ['invoice'] });
     if (!bill) throw new NotFoundException('E-Way Bill not found');
 
     Object.assign(bill, dto);
     await this.ewayBillRepo.save(bill);
 
-    // 🔹 Emit event after E-Way Bill update
+    // Emit event after E-Way Bill update
     this.eventService.emit(AppEvent.EWAY_BILL_UPDATED, {
       ewbId: bill.ewbId,
       invoiceId: bill.invoiceId,
       organizationId: bill.invoice.organizationId,
+      updatedBy: user.userId,
     });
 
     return this.toEwayBillResponseDto(bill);
@@ -94,7 +101,11 @@ export class ComplianceService {
   }
 
   // -------------------- GSTR FILING --------------------
-  async generateGstr(dto: GenerateGstrDto, organizationId: string): Promise<GstrFilingResponseDto> {
+  async generateGstr(
+    dto: GenerateGstrDto,
+    organizationId: string,
+    user: RequestUser,
+  ): Promise<GstrFilingResponseDto> {
     const existing = await this.gstrFilingRepo.findOne({
       where: { organizationId, type: dto.type, period: dto.period },
     });
@@ -109,18 +120,19 @@ export class ComplianceService {
 
     await this.gstrFilingRepo.save(filing);
 
-    // 🔹 Emit event after GSTR filing generation
+    // Emit event after GSTR filing generation
     this.eventService.emit(AppEvent.GSTR_FILING_GENERATED, {
       filingId: filing.filingId,
       organizationId: filing.organizationId,
       period: filing.period,
       type: filing.type,
+      createdBy: user.userId,
     });
 
     return this.toGstrFilingResponseDto(filing);
   }
 
-  async getGstrFilings(organizationId: string): Promise<GstrFilingResponseDto[]> {
+  async getGstrFilings(organizationId: string, user?: RequestUser): Promise<GstrFilingResponseDto[]> {
     const filings = await this.gstrFilingRepo.find({ where: { organizationId } });
     return filings.map(this.toGstrFilingResponseDto);
   }
@@ -130,6 +142,7 @@ export class ComplianceService {
     status: GstrFilingStatus,
     payload?: Record<string, any>,
     filedAt?: Date,
+    user?: RequestUser,
   ): Promise<GstrFilingResponseDto> {
     const filing = await this.gstrFilingRepo.findOne({ where: { filingId } });
     if (!filing) throw new NotFoundException('GSTR filing not found');
@@ -140,11 +153,12 @@ export class ComplianceService {
 
     await this.gstrFilingRepo.save(filing);
 
-    // 🔹 Emit event after GSTR filing update
+    // Emit event after GSTR filing update
     this.eventService.emit(AppEvent.GSTR_FILING_UPDATED, {
       filingId: filing.filingId,
       organizationId: filing.organizationId,
       status: filing.status,
+      updatedBy: user?.userId,
     });
 
     return this.toGstrFilingResponseDto(filing);

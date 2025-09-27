@@ -1,74 +1,50 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Patch, 
-  Delete, 
-  Param, 
-  Body, 
-  Query, 
-  ParseUUIDPipe, 
-  HttpCode, 
-  HttpStatus 
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, ParseUUIDPipe, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { BusinessPartnersService } from './business-partners.service';
-import { 
-  CreateBusinessPartnerDto, 
-  UpdateBusinessPartnerDto, 
-  BusinessPartnerResponseDto, 
-  BusinessPartnerQueryDto 
-} from './dto/business-partner.dto';
+import { CreateBusinessPartnerDto, UpdateBusinessPartnerDto, BusinessPartnerResponseDto, BusinessPartnerQueryDto } from './dto/business-partner.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/auth.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequestUser } from '../../common/interfaces/auth.interface';
+import { UserRole } from '../../common/enums';
 
 @ApiTags('Business Partners')
 @Controller('partners')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class BusinessPartnersController {
   constructor(private readonly partnersService: BusinessPartnersService) {}
 
-  // 🔹 Create a new business partner
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   @ApiOperation({ summary: 'Create a new business partner' })
-  @ApiResponse({ status: 201, description: 'Partner successfully created', type: BusinessPartnerResponseDto })
-  async create(@Body() dto: CreateBusinessPartnerDto): Promise<BusinessPartnerResponseDto> {
-    return this.partnersService.create(dto);
+  @ApiResponse({ status: 201, type: BusinessPartnerResponseDto })
+  create(@Body() dto: CreateBusinessPartnerDto, @CurrentUser() user: RequestUser) {
+    return this.partnersService.create(dto, user);
   }
 
-  // 🔹 Get all partners with filters, search, pagination
   @Get()
-  @ApiOperation({ summary: 'Get all business partners with optional filters' })
-  @ApiResponse({ status: 200, description: 'List of partners', type: [BusinessPartnerResponseDto] })
-  async findAll(@Query() query: BusinessPartnerQueryDto): Promise<BusinessPartnerResponseDto[]> {
-    return this.partnersService.findAll(query);
+  @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER, UserRole.VIEWER)
+  findAll(@Query() query: BusinessPartnerQueryDto, @CurrentUser() user: RequestUser) {
+    return this.partnersService.findAll(query, user);
   }
 
-  // 🔹 Get single partner by ID
   @Get(':id')
-  @ApiOperation({ summary: 'Get partner by ID' })
-  @ApiParam({ name: 'id', description: 'Partner ID', type: 'string' })
-  @ApiResponse({ status: 200, description: 'Partner details', type: BusinessPartnerResponseDto })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<BusinessPartnerResponseDto> {
-    return this.partnersService.findOne(id);
+  @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER, UserRole.VIEWER)
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: RequestUser) {
+    return this.partnersService.findOne(id, user);
   }
 
-  // 🔹 Update a partner
   @Patch(':id')
-  @ApiOperation({ summary: 'Update an existing business partner' })
-  @ApiParam({ name: 'id', description: 'Partner ID', type: 'string' })
-  @ApiResponse({ status: 200, description: 'Partner successfully updated', type: BusinessPartnerResponseDto })
-  async update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateBusinessPartnerDto
-  ): Promise<BusinessPartnerResponseDto> {
-    return this.partnersService.update(id, dto);
+  @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBusinessPartnerDto, @CurrentUser() user: RequestUser) {
+    return this.partnersService.update(id, dto, user);
   }
 
-  // 🔹 Delete a partner
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a business partner' })
-  @ApiParam({ name: 'id', description: 'Partner ID', type: 'string' })
-  @ApiResponse({ status: 204, description: 'Partner successfully deleted' })
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.partnersService.remove(id);
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: RequestUser) {
+    return this.partnersService.remove(id, user);
   }
 }

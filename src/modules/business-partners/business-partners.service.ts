@@ -12,6 +12,7 @@ import {
 } from './dto/business-partner.dto';
 import { EventService } from '../event/event.service';
 import { AppEvent } from '../../common/enums/app-event.enum';
+import { RequestUser } from '../../common/interfaces/auth.interface';
 
 @Injectable()
 export class BusinessPartnersService {
@@ -22,11 +23,11 @@ export class BusinessPartnersService {
     @InjectRepository(Invoice)
     private readonly invoicesRepo: Repository<Invoice>,
 
-    private readonly eventService: EventService, // Inject EventService
+    private readonly eventService: EventService,
   ) {}
 
   // 🔹 Create a new partner
-  async create(dto: CreateBusinessPartnerDto): Promise<BusinessPartnerResponseDto> {
+  async create(dto: CreateBusinessPartnerDto, user: RequestUser): Promise<BusinessPartnerResponseDto> {
     if (dto.gstin) {
       const exists = await this.partnersRepo.findOne({ where: { gstin: dto.gstin } });
       if (exists) throw new BadRequestException('GSTIN already exists');
@@ -45,13 +46,14 @@ export class BusinessPartnersService {
       organizationId: partner.organizationId,
       name: partner.name,
       type: partner.type,
+      createdBy: user.userId, // optional audit info
     });
 
     return this.toResponseDto(partner);
   }
 
   // 🔹 Get all partners with filters, search, pagination
-  async findAll(query: BusinessPartnerQueryDto): Promise<BusinessPartnerResponseDto[]> {
+  async findAll(query: BusinessPartnerQueryDto, user: RequestUser): Promise<BusinessPartnerResponseDto[]> {
     const { page = 1, limit = 10, type, search } = query;
 
     const where: any = {};
@@ -69,14 +71,14 @@ export class BusinessPartnersService {
   }
 
   // 🔹 Get single partner by ID
-  async findOne(id: string): Promise<BusinessPartnerResponseDto> {
+  async findOne(id: string, user: RequestUser): Promise<BusinessPartnerResponseDto> {
     const partner = await this.partnersRepo.findOne({ where: { partnerId: id } });
     if (!partner) throw new NotFoundException('Partner not found');
     return this.toResponseDto(partner, true);
   }
 
   // 🔹 Update a partner
-  async update(id: string, dto: UpdateBusinessPartnerDto): Promise<BusinessPartnerResponseDto> {
+  async update(id: string, dto: UpdateBusinessPartnerDto, user: RequestUser): Promise<BusinessPartnerResponseDto> {
     const partner = await this.partnersRepo.findOne({ where: { partnerId: id } });
     if (!partner) throw new NotFoundException('Partner not found');
 
@@ -89,20 +91,24 @@ export class BusinessPartnersService {
       organizationId: partner.organizationId,
       name: partner.name,
       type: partner.type,
+      updatedBy: user.userId, // optional audit info
     });
 
     return this.toResponseDto(partner);
   }
 
   // 🔹 Delete a partner
-  async remove(id: string): Promise<void> {
+  async remove(id: string, user: RequestUser): Promise<void> {
     const partner = await this.partnersRepo.findOne({ where: { partnerId: id } });
     if (!partner) throw new NotFoundException('Partner not found');
 
     await this.partnersRepo.remove(partner);
 
-    // 🔹 Optionally emit a partner deleted event (if you want)
-    // this.eventService.emit(AppEvent.PARTNER_DELETED, { partnerId: partner.partnerId });
+    // 🔹 Optionally emit a partner deleted event
+    // this.eventService.emit(AppEvent.PARTNER_DELETED, {
+    //   partnerId: partner.partnerId,
+    //   deletedBy: user.userId,
+    // });
   }
 
   // 🔹 Helper: Convert entity to response DTO

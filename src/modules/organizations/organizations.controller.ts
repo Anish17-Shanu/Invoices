@@ -31,11 +31,12 @@ import { Roles, OrganizationParam } from '../../common/decorators/auth.decorator
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/interfaces/auth.interface';
 import { UserRole } from '../../common/enums';
+import { RolesGuard } from '@/common/guards/roles.guard';
 
 @ApiTags('Organizations')
 @ApiBearerAuth('access-token')
 @Controller('organizations')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 export class OrganizationsController {
   private readonly logger = new Logger(OrganizationsController.name);
 
@@ -87,7 +88,7 @@ export class OrganizationsController {
 
   @Get(':orgId')
   @OrganizationParam('orgId')
-  @Roles(UserRole.VIEWER)
+  @Roles(UserRole.ADMIN, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get organization details' })
   @ApiParam({ name: 'orgId', description: 'Organization ID' })
   @ApiResponse({

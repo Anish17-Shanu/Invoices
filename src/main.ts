@@ -74,7 +74,7 @@ async function bootstrap() {
     )
     .addTag('Organizations', 'Organization management')
     .addTag('Business Partners', 'Customer and vendor management')
-    .addTag('Products & Services', 'Product and service catalog')
+    //.addTag('Products & Services', 'Product and service catalog')
     .addTag('Invoices', 'Invoice management and operations')
     .addTag('Payments', 'Payment recording and tracking')
     .addTag('Compliance', 'GST and E-Way Bill compliance')

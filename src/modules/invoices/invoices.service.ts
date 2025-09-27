@@ -1,3 +1,4 @@
+// src/modules/invoices/invoices.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -7,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Invoice, InvoiceItem, ProductService } from '../../entities';
-import { CreateInvoiceDto, UpdateInvoiceDto, InvoiceQueryDto } from './dto/invoice.dto';
+import { Invoice, InvoiceItem, ProductsServices } from '../../entities';
+import { CreateInvoiceDto, UpdateInvoiceDto, InvoiceQueryDto, CreateInvoiceItemDto } from './dto/invoice.dto';
 import { InvoiceStatus } from '../../common/enums';
 import { EventService } from '../event/event.service';
 import { AppEvent } from '../../common/enums/app-event.enum';
@@ -24,8 +25,8 @@ export class InvoicesService {
     @InjectRepository(InvoiceItem)
     private invoiceItemRepository: Repository<InvoiceItem>,
 
-    @InjectRepository(ProductService)
-    private productRepository: Repository<ProductService>,
+    @InjectRepository(ProductsServices)
+    private productRepository: Repository<ProductsServices>,
 
     private eventService: EventService,
   ) {}
@@ -37,7 +38,7 @@ export class InvoicesService {
     let subtotal = 0;
     let totalTax = 0;
 
-    const invoiceItems = await Promise.all(
+    const invoiceItems: InvoiceItem[] = await Promise.all(
       items.map(async (item) => {
         const lineTotal = item.quantity * item.rate;
 
@@ -87,7 +88,7 @@ export class InvoicesService {
       items: invoiceItems,
     });
 
-    const saved = await this.invoiceRepository.save(invoice);
+    const saved: Invoice = await this.invoiceRepository.save(invoice);
     this.logger.log(`Created invoice: ${saved.invoiceId}`);
 
     const fullInvoice = await this.findOne(organizationId, saved.invoiceId);
@@ -169,7 +170,7 @@ export class InvoicesService {
       let subtotal = 0;
       let totalTax = 0;
 
-      const invoiceItems = await Promise.all(
+      const invoiceItems: InvoiceItem[] = await Promise.all(
         items.map(async (item) => {
           const lineTotal = item.quantity * item.rate;
 

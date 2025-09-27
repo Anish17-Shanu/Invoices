@@ -1,4 +1,3 @@
-// src/modules/auth/auth.controller.ts
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -11,6 +10,10 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  /**
+   * Login endpoint
+   * Public access - no JWT required
+   */
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -25,10 +28,14 @@ export class AuthController {
     },
   })
   async login(@Body() loginDto: LoginDto) {
-    // 👇 use email instead of username to match RegisterDto
+    // Ensure loginDto uses email instead of username
     return this.authService.login(loginDto.email, loginDto.password);
   }
 
+  /**
+   * Register a new user
+   * Public access - no JWT required
+   */
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)

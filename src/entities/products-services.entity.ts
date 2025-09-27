@@ -13,7 +13,7 @@ import { InvoiceItem } from './invoice-item.entity';
 
 @Entity('products_services')
 @Unique(['organizationId', 'name'])
-export class ProductService {
+export class ProductsServices {
   @PrimaryGeneratedColumn('uuid')
   productId: string;
 

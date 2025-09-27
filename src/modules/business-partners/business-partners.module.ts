@@ -5,11 +5,13 @@ import { BusinessPartnersController } from './business-partners.controller';
 import { BusinessPartner } from '../../entities/business-partner.entity';
 import { Invoice } from '../../entities/invoice.entity';
 import { EventModule } from '../event/event.module';
+import { AuthModule } from '../auth/auth.module'; // ✅ Needed for JWT guard
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BusinessPartner, Invoice]), 
-    EventModule, // ✅ Allows using EventService if needed
+    TypeOrmModule.forFeature([BusinessPartner, Invoice]),
+    EventModule,
+    AuthModule, // ✅ Add this
   ],
   controllers: [BusinessPartnersController],
   providers: [BusinessPartnersService],

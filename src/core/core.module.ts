@@ -12,7 +12,7 @@ import {
   Invoice,
   User,
   BusinessPartner,
-  ProductService,
+  ProductsServices,
   Payment,
   InvoiceItem,
 } from '../entities'; // only entity classes
@@ -43,7 +43,7 @@ import {
           Invoice,
           User,
           BusinessPartner,
-          ProductService,
+          ProductsServices,
           Payment,
           InvoiceItem,
         ],

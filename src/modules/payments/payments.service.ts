@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment } from '../../entities/payment.entity';
@@ -9,12 +9,14 @@ import { AppEvent } from '../../common/enums/app-event.enum';
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepo: Repository<Payment>,
     @InjectRepository(Invoice)
     private readonly invoiceRepo: Repository<Invoice>,
-    private readonly eventService: EventService, // inject EventService
+    private readonly eventService: EventService,
   ) {}
 
   // -------------------- CREATE PAYMENT --------------------
@@ -22,7 +24,6 @@ export class PaymentsService {
     const invoice = await this.invoiceRepo.findOne({ where: { invoiceId } });
     if (!invoice) throw new NotFoundException('Invoice not found');
 
-    // Optional: check if payment exceeds invoice total
     const totalPaid = invoice.amountPaid ?? 0;
     const remaining = invoice.totalAmount - totalPaid;
     if (dto.amount > remaining) {
@@ -37,11 +38,11 @@ export class PaymentsService {
 
     await this.paymentRepo.save(payment);
 
-    // Update invoice's amountPaid
+    // Update invoice amountPaid
     invoice.amountPaid = totalPaid + dto.amount;
     await this.invoiceRepo.save(invoice);
 
-    // Emit event after payment creation
+    // 🔹 Emit event after creation
     this.eventService.emit(AppEvent.PAYMENT_CREATED, {
       paymentId: payment.paymentId,
       invoiceId: invoice.invoiceId,
@@ -49,6 +50,7 @@ export class PaymentsService {
       amount: payment.amount,
     });
 
+    this.logger.log(`Payment ${payment.paymentId} created for invoice ${invoiceId}`);
     return this.toPaymentResponseDto(payment);
   }
 
@@ -79,7 +81,7 @@ export class PaymentsService {
     payment.invoice.amountPaid = totalPaid;
     await this.invoiceRepo.save(payment.invoice);
 
-    // Emit event after payment update
+    // 🔹 Emit event after update
     this.eventService.emit(AppEvent.PAYMENT_UPDATED, {
       paymentId: payment.paymentId,
       invoiceId: payment.invoiceId,
@@ -87,10 +89,11 @@ export class PaymentsService {
       amount: payment.amount,
     });
 
+    this.logger.log(`Payment ${paymentId} updated`);
     return this.toPaymentResponseDto(payment);
   }
 
-  // -------------------- CONVERT PAYMENT TO DTO --------------------
+  // -------------------- HELPER: CONVERT PAYMENT TO DTO --------------------
   private toPaymentResponseDto(payment: Payment): PaymentResponseDto {
     return {
       paymentId: payment.paymentId,

@@ -32,27 +32,26 @@ export class OrganizationsService {
     createOrganizationDto: Partial<CreateOrganizationDto>,
   ): Promise<Organization> {
     try {
-      // Step 1: Auto-generate values if missing
-      const shortId = uuidv4().split('-')[0]; // e.g., "116b4f66"
+      const shortId = uuidv4().split('-')[0];
+
       const pan = createOrganizationDto.pan ?? `PAN-${shortId}`.slice(0, 10);
       const gstin = createOrganizationDto.gstin ?? `GSTIN-${shortId}`.slice(0, 15);
-
       const name = createOrganizationDto.name ?? `Org-${shortId}`;
 
-      let organization = this.organizationRepository.create({
+      // WorkspaceId is internal only, not from DTO
+      const organization = this.organizationRepository.create({
         ...createOrganizationDto,
         gstin,
         pan,
         name,
-        workspaceId: uuidv4(), // internal UUID
+        workspaceId: uuidv4(),
       });
 
-      // Save to DB
       const saved = await this.organizationRepository.save(organization);
 
       this.logger.log(`Created organization: ${saved.organizationId}`);
 
-      // Emit event
+      // Emit event after creation
       this.eventService.emit(AppEvent.PARTNER_CREATED, {
         organizationId: saved.organizationId,
         name: saved.name,
@@ -76,7 +75,7 @@ export class OrganizationsService {
   async createDefaultOrgForUser(userEmail: string): Promise<Organization> {
     const shortId = uuidv4().split('-')[0];
     const defaultOrg: Partial<CreateOrganizationDto> = {
-      name: `Org-${userEmail.split('@')[0]}`, // e.g., "Org-johndoe"
+      name: `Org-${userEmail.split('@')[0]}`,
       gstin: `GSTIN-${shortId}`.slice(0, 15),
       pan: `PAN-${shortId}`.slice(0, 10),
     };
@@ -114,11 +113,13 @@ export class OrganizationsService {
     const organization = await this.organizationRepository.findOne({
       where: { organizationId },
     });
+
     if (!organization) {
       throw new NotFoundException(
         `Organization with ID ${organizationId} not found`,
       );
     }
+
     return organization;
   }
 
@@ -130,7 +131,9 @@ export class OrganizationsService {
     const organization = await this.findOne(organizationId);
 
     try {
+      // Keep workspaceId internal, don't allow updating via DTO
       Object.assign(organization, updateOrganizationDto);
+
       const updated = await this.organizationRepository.save(organization);
 
       this.logger.log(`Updated organization: ${organizationId}`);
@@ -157,11 +160,13 @@ export class OrganizationsService {
   // -------------------- DELETE ORGANIZATION --------------------
   async remove(organizationId: string): Promise<void> {
     const result = await this.organizationRepository.delete(organizationId);
+
     if (result.affected === 0) {
       throw new NotFoundException(
         `Organization with ID ${organizationId} not found`,
       );
     }
+
     this.logger.log(`Deleted organization: ${organizationId}`);
   }
 }

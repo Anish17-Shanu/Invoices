@@ -8,7 +8,7 @@ import {
   Invoice, 
   User, 
   BusinessPartner, 
-  ProductService, 
+  ProductsServices, 
   Payment, 
   InvoiceItem 
 } from '../entities'; // Only import actual entities
@@ -33,7 +33,7 @@ export const AppDataSource = new DataSource({
     Invoice,
     User,
     BusinessPartner,
-    ProductService,
+    ProductsServices,
     Payment,
     InvoiceItem,
   ],
