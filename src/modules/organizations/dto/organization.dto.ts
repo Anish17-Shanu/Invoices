@@ -90,9 +90,6 @@ export class OrganizationResponseDto {
   @ApiProperty({ description: 'Workspace ID (internal UUID)' })
   workspaceId: string;
 
-  @ApiProperty({ description: 'Workspace Code (external ORG-xxxx)' })
-  workspaceCode: string; // 🔥 Always present now
-
   @ApiProperty({ description: 'Organization name' })
   name: string;
 
@@ -125,11 +122,6 @@ export class OrganizationQueryDto {
   @IsOptional()
   @IsUUID()
   workspaceId?: string;
-
-  @ApiProperty({ description: 'Filter by Workspace Code (external ORG-xxxx)', required: false })
-  @IsOptional()
-  @IsString()
-  workspaceCode?: string;
 
   @ApiProperty({ description: 'Sort by field', required: false, default: 'createdAt' })
   @IsOptional()

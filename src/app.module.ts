@@ -13,6 +13,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AuthModule } from './modules/auth/auth.module';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -30,8 +31,12 @@ import { AuthModule } from './modules/auth/auth.module';
   providers: [
     // 🔹 Global Auth Guard
     {
+    provide: APP_GUARD,
+    useClass: AuthGuard, // must be first
+    },
+    {
       provide: APP_GUARD,
-      useClass: AuthGuard,
+      useClass: RolesGuard, // after AuthGuard
     },
 
     // 🔹 Global Logging Interceptor

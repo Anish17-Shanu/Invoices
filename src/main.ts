@@ -1,4 +1,5 @@
-import { NestFactory } from '@nestjs/core';
+// src/main.ts
+import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -9,23 +10,26 @@ import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AuthGuard } from './common/guards/auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
   const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  const reflector = app.get(Reflector);
 
   // Use Winston logger
   app.useLogger(logger);
 
-  // Enable shutdown hooks for graceful termination
+  // Enable shutdown hooks
   app.enableShutdownHooks();
 
-  // Global security middleware
+  // Security middleware
   app.use(helmet());
 
-  // Global validation pipe
+  // Validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -35,7 +39,7 @@ async function bootstrap() {
     }),
   );
 
-  // Global exception filter
+  // Exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Global interceptors
@@ -47,9 +51,12 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN', '*'), // allow dynamic origin from env
+    origin: configService.get<string>('CORS_ORIGIN', '*'),
     credentials: true,
   });
+
+  // Global guards (DI-compliant)
+  app.useGlobalGuards(app.get(AuthGuard), new RolesGuard(reflector));
 
   // Swagger setup
   const swaggerConfig = new DocumentBuilder()
@@ -78,6 +85,7 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
+  // Start server
   const port = configService.get<number>('PORT', 3000);
   await app.listen(port);
 

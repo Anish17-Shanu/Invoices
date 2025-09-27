@@ -33,10 +33,6 @@ export class Organization {
   @Index()
   workspaceId: string;
 
-  // New column for custom ORG-xxxx codes
-  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
-  workspaceCode: string;
-
   @Column({ length: 255 })
   name: string;
 

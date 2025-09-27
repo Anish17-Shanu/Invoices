@@ -33,9 +33,10 @@ export class OrganizationsService {
   ): Promise<Organization> {
     try {
       // Step 1: Auto-generate values if missing
-      const shortId = uuidv4().split('-')[0];
-      const gstin = createOrganizationDto.gstin ?? `GSTIN-${shortId}`;
-      const pan = createOrganizationDto.pan ?? `PAN-${shortId}`;
+      const shortId = uuidv4().split('-')[0]; // e.g., "116b4f66"
+      const pan = createOrganizationDto.pan ?? `PAN-${shortId}`.slice(0, 10);
+      const gstin = createOrganizationDto.gstin ?? `GSTIN-${shortId}`.slice(0, 15);
+
       const name = createOrganizationDto.name ?? `Org-${shortId}`;
 
       let organization = this.organizationRepository.create({
@@ -46,22 +47,14 @@ export class OrganizationsService {
         workspaceId: uuidv4(), // internal UUID
       });
 
-      // Save to DB to get orgId
-      organization = await this.organizationRepository.save(organization);
-
-      // Step 2: Generate workspaceCode (ORG-<orgId>-<short-uuid>)
-      organization.workspaceCode = `ORG-${organization.organizationId}-${shortId}`;
-
+      // Save to DB
       const saved = await this.organizationRepository.save(organization);
 
-      this.logger.log(
-        `Created organization: ${saved.organizationId} with workspaceCode: ${saved.workspaceCode}`,
-      );
+      this.logger.log(`Created organization: ${saved.organizationId}`);
 
       // Emit event
       this.eventService.emit(AppEvent.PARTNER_CREATED, {
         organizationId: saved.organizationId,
-        workspaceCode: saved.workspaceCode,
         name: saved.name,
       });
 
@@ -74,9 +67,6 @@ export class OrganizationsService {
         if (error.constraint?.includes('pan')) {
           throw new ConflictException('PAN already exists');
         }
-        if (error.constraint?.includes('workspaceCode')) {
-          throw new ConflictException('WorkspaceCode already exists');
-        }
       }
       throw error;
     }
@@ -87,8 +77,8 @@ export class OrganizationsService {
     const shortId = uuidv4().split('-')[0];
     const defaultOrg: Partial<CreateOrganizationDto> = {
       name: `Org-${userEmail.split('@')[0]}`, // e.g., "Org-johndoe"
-      gstin: `GSTIN-${shortId}`,
-      pan: `PAN-${shortId}`,
+      gstin: `GSTIN-${shortId}`.slice(0, 15),
+      pan: `PAN-${shortId}`.slice(0, 10),
     };
 
     return this.create(defaultOrg);
@@ -96,19 +86,11 @@ export class OrganizationsService {
 
   // -------------------- GET ORGANIZATIONS --------------------
   async findAll(query: OrganizationQueryDto) {
-    const {
-      search,
-      workspaceCode,
-      page = 1,
-      limit = 10,
-      sortBy = 'createdAt',
-      sortOrder = 'DESC',
-    } = query;
+    const { search, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = query;
 
     const qb = this.organizationRepository.createQueryBuilder('org');
 
     if (search) qb.andWhere('org.name ILIKE :search', { search: `%${search}%` });
-    if (workspaceCode) qb.andWhere('org.workspaceCode = :workspaceCode', { workspaceCode });
 
     qb.orderBy(`org.${sortBy}`, sortOrder as 'ASC' | 'DESC')
       .skip((page - 1) * limit)
@@ -140,14 +122,6 @@ export class OrganizationsService {
     return organization;
   }
 
-  // -------------------- GET ORGANIZATIONS BY WORKSPACE CODE --------------------
-  async findByWorkspace(workspaceCode: string): Promise<Organization[]> {
-    return this.organizationRepository.find({
-      where: { workspaceCode },
-      order: { createdAt: 'DESC' },
-    });
-  }
-
   // -------------------- UPDATE ORGANIZATION --------------------
   async update(
     organizationId: string,
@@ -174,9 +148,6 @@ export class OrganizationsService {
         }
         if (error.constraint?.includes('pan')) {
           throw new ConflictException('PAN already exists');
-        }
-        if (error.constraint?.includes('workspaceCode')) {
-          throw new ConflictException('WorkspaceCode already exists');
         }
       }
       throw error;

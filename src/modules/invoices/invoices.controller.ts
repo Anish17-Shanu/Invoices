@@ -31,11 +31,12 @@ import { OrganizationParam } from '../../common/decorators/auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/interfaces/auth.interface';
 import { UserRole } from '../../common/enums';
+import { RolesGuard } from '@/common/guards/roles.guard';
 
 @ApiTags('Invoices')
 @ApiBearerAuth('access-token')
 @Controller('organizations/:orgId/invoices')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 export class InvoicesController {
   private readonly logger = new Logger(InvoicesController.name);
 

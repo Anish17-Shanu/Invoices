@@ -1,3 +1,4 @@
+// src/modules/organizations/organizations.controller.ts
 import {
   Controller,
   Get,
@@ -131,4 +132,3 @@ export class OrganizationsController {
     await this.organizationsService.remove(orgId);
   }
 }
-

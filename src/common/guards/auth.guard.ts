@@ -45,48 +45,46 @@ export class AuthGuard implements CanActivate {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
 
-      // Normalize payload into RequestUser
+      // Pass all roles as an array
       const user: RequestUser = {
         ...payload,
-        role: this.resolveRole(payload.roles),
+        roles: payload.roles,
+        role: UserRole.VIEWER
       };
 
       request.user = user;
 
-      // Role check
+      // Role check (optional, RolesGuard will also check)
       const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
         ROLES_KEY,
         [context.getHandler(), context.getClass()],
       );
 
       if (requiredRoles) {
-        const hasRequiredRole = requiredRoles.some((role) =>
-          user.roles?.includes(role),
+        const hasRequiredRole = user.roles.some((role) =>
+          requiredRoles.includes(role),
         );
         if (!hasRequiredRole) {
           throw new ForbiddenException('Insufficient permissions');
         }
       }
 
-      // Organization check (param binding)
+      // Organization param check
       const orgParam = this.reflector.getAllAndOverride<string>(
         ORGANIZATION_KEY,
         [context.getHandler(), context.getClass()],
       );
-
       if (orgParam) {
         const requestedOrgId = request.params?.[orgParam];
         if (!requestedOrgId) {
           throw new ForbiddenException('Organization ID is required');
         }
-        // You can expand this to actually check user's orgs
+        // Optional: validate user belongs to this org
       }
 
       return true;
     } catch (error) {
-      if (error instanceof ForbiddenException) {
-        throw error;
-      }
+      if (error instanceof ForbiddenException) throw error;
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
@@ -94,9 +92,5 @@ export class AuthGuard implements CanActivate {
   private extractTokenFromHeader(request: any): string | undefined {
     const [type, token] = request.headers?.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
-  }
-
-  private resolveRole(roles: UserRole[] = []): UserRole {
-    return roles.length > 0 ? roles[0] : UserRole.VIEWER;
   }
 }

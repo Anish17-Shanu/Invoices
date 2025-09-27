@@ -17,7 +17,6 @@ describe('OrganizationsService', () => {
   const mockOrganization: Organization = {
     organizationId: '123e4567-e89b-12d3-a456-426614174000',
     workspaceId: '123e4567-e89b-12d3-a456-426614174001',
-    workspaceCode: 'ORG-123e4567-e89b-12d3-a456-426614174000-123abc',
     name: 'Test Organization',
     legalName: 'Test Organization Ltd.',
     gstin: '12ABCDE1234F1Z5',
@@ -84,17 +83,14 @@ describe('OrganizationsService', () => {
 
     it('should create a new organization and emit event', async () => {
       mockRepository.create.mockReturnValue(mockOrganization);
-      mockRepository.save
-        .mockResolvedValueOnce({ ...mockOrganization, workspaceCode: null }) // first save
-        .mockResolvedValueOnce(mockOrganization); // second save with workspaceCode
+      mockRepository.save.mockResolvedValue(mockOrganization);
 
       const result = await service.create(createDto);
 
       expect(mockRepository.create).toHaveBeenCalledWith(expect.objectContaining(createDto));
-      expect(mockRepository.save).toHaveBeenCalledTimes(2);
+      expect(mockRepository.save).toHaveBeenCalled();
       expect(eventService.emit).toHaveBeenCalledWith(AppEvent.PARTNER_CREATED, {
         organizationId: mockOrganization.organizationId,
-        workspaceCode: mockOrganization.workspaceCode,
         name: mockOrganization.name,
       });
       expect(result).toEqual(mockOrganization);
@@ -153,29 +149,12 @@ describe('OrganizationsService', () => {
     });
   });
 
-  describe('findByWorkspace', () => {
-    it('should return organizations for a workspaceCode', async () => {
-      mockRepository.find.mockResolvedValue([mockOrganization]);
-
-      const result = await service.findByWorkspace(mockOrganization.workspaceCode);
-
-      expect(result).toEqual([mockOrganization]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { workspaceCode: mockOrganization.workspaceCode },
-        order: { createdAt: 'DESC' },
-      });
-    });
-  });
-
   describe('update', () => {
     const updateDto: UpdateOrganizationDto = { name: 'Updated Org' };
 
     it('should update organization and emit event', async () => {
       mockRepository.findOne.mockResolvedValue(mockOrganization);
-      mockRepository.save.mockResolvedValue({
-        ...mockOrganization,
-        ...updateDto,
-      });
+      mockRepository.save.mockResolvedValue({ ...mockOrganization, ...updateDto });
 
       const result = await service.update(mockOrganization.organizationId, updateDto);
 

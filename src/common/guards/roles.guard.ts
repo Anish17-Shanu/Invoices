@@ -9,8 +9,8 @@ import { Reflector } from '@nestjs/core';
 import { UserRole } from '../enums';
 
 /**
- * RolesGuard ensures that the current user has
- * the required role(s) to access a route.
+ * RolesGuard ensures the current user has
+ * at least one of the allowed roles to access a route.
  *
  * Works together with the @Roles() decorator and AuthGuard.
  */
@@ -21,7 +21,6 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    // Read @Roles() metadata
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>('roles', [
       context.getHandler(),
       context.getClass(),
@@ -35,14 +34,19 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (!user) {
-      this.logger.warn(`Access denied: no user on request`);
+    if (!user || !user.roles?.length) {
+      this.logger.warn(`Access denied: no user or roles found on request`);
       throw new ForbiddenException('You must be authenticated');
     }
 
-    if (!requiredRoles.includes(user.role)) {
+    // Allow access if user has at least one required role
+    const hasRole = user.roles.some((role: UserRole) => requiredRoles.includes(role));
+
+    if (!hasRole) {
       this.logger.warn(
-        `Access denied for user ${user.userId} with role ${user.role}. Required: ${requiredRoles.join(', ')}`,
+        `Access denied for user ${user.userId} with roles [${user.roles.join(
+          ', ',
+        )}]. Required: ${requiredRoles.join(', ')}`,
       );
       throw new ForbiddenException(
         `You do not have the required role: ${requiredRoles.join(', ')}`,
