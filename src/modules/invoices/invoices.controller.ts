@@ -8,7 +8,6 @@ import {
   Query,
   UseGuards,
   Logger,
-  HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import {
@@ -19,24 +18,24 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { InvoicesService } from './invoices.service';
 import {
   CreateInvoiceDto,
   UpdateInvoiceDto,
   InvoiceResponseDto,
   InvoiceQueryDto,
 } from './dto/invoice.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // ✅ Correct JWT Guard
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles, OrganizationParam } from '../../common/decorators/auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/interfaces/auth.interface';
-import { UserRole } from '../../common/enums';
+import { UserRole } from '../../common/enums'; // ✅ unified import
+import { InvoicesService } from './invoices.service';
 
 @ApiTags('Invoices')
 @ApiBearerAuth('access-token')
 @Controller('organizations/:orgId/invoices')
-@UseGuards(JwtAuthGuard, RolesGuard) // ✅ Ensures JWT validation + role checks
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class InvoicesController {
   private readonly logger = new Logger(InvoicesController.name);
 

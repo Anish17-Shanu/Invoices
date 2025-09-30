@@ -9,11 +9,12 @@ import {
   UseGuards,
   Logger,
   HttpStatus,
+  HttpException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto, PaymentResponseDto } from './dto/payment.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // ✅ Correct JWT Guard
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -23,7 +24,7 @@ import { UserRole } from '../../common/enums';
 @ApiTags('Payments')
 @ApiBearerAuth('access-token')
 @Controller('payments')
-@UseGuards(JwtAuthGuard, RolesGuard) // ✅ JWT validation + role checks
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class PaymentsController {
   private readonly logger = new Logger(PaymentsController.name);
 
@@ -40,8 +41,13 @@ export class PaymentsController {
     @Body() dto: CreatePaymentDto,
     @CurrentUser() user: RequestUser,
   ): Promise<PaymentResponseDto> {
-    this.logger.log(`User ${user.userId} creating payment for invoice ${invoiceId}`);
-    return this.paymentsService.createPayment(invoiceId, dto);
+    try {
+      this.logger.log(`User ${user.userId} creating payment for invoice ${invoiceId}`);
+      return await this.paymentsService.createPayment(invoiceId, dto, user);
+    } catch (error) {
+      this.logger.error(`Error creating payment: ${error.message}`, error.stack);
+      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // -------------------- Get Payments By Invoice --------------------
@@ -53,7 +59,12 @@ export class PaymentsController {
   async getPaymentsByInvoice(
     @Param('invoiceId', ParseUUIDPipe) invoiceId: string,
   ): Promise<PaymentResponseDto[]> {
-    return this.paymentsService.getPaymentsByInvoice(invoiceId);
+    try {
+      return await this.paymentsService.getPaymentsByInvoice(invoiceId);
+    } catch (error) {
+      this.logger.error(`Error fetching payments for invoice ${invoiceId}: ${error.message}`, error.stack);
+      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // -------------------- Get Payment By ID --------------------
@@ -65,7 +76,12 @@ export class PaymentsController {
   async getPaymentById(
     @Param('paymentId', ParseUUIDPipe) paymentId: string,
   ): Promise<PaymentResponseDto> {
-    return this.paymentsService.getPaymentById(paymentId);
+    try {
+      return await this.paymentsService.getPaymentById(paymentId);
+    } catch (error) {
+      this.logger.error(`Error fetching payment ${paymentId}: ${error.message}`, error.stack);
+      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // -------------------- Update Payment --------------------
@@ -79,7 +95,12 @@ export class PaymentsController {
     @Body() dto: Partial<CreatePaymentDto>,
     @CurrentUser() user: RequestUser,
   ): Promise<PaymentResponseDto> {
-    this.logger.log(`User ${user.userId} updating payment ${paymentId}`);
-    return this.paymentsService.updatePayment(paymentId, dto);
+    try {
+      this.logger.log(`User ${user.userId} updating payment ${paymentId}`);
+      return await this.paymentsService.updatePayment(paymentId, dto, user);
+    } catch (error) {
+      this.logger.error(`Error updating payment ${paymentId}: ${error.message}`, error.stack);
+      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

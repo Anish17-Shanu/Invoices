@@ -19,25 +19,38 @@ export class BusinessPartnersController {
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   @ApiOperation({ summary: 'Create a new business partner' })
   @ApiResponse({ status: 201, type: BusinessPartnerResponseDto })
+  // Ensure user object contains 'roles' array for role-based access
   create(@Body() dto: CreateBusinessPartnerDto, @CurrentUser() user: RequestUser) {
+    if (!user || !user.roles) {
+      throw new Error('User roles not found in token payload');
+    }
     return this.partnersService.create(dto, user);
   }
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER, UserRole.VIEWER)
   findAll(@Query() query: BusinessPartnerQueryDto, @CurrentUser() user: RequestUser) {
+    if (!user || !user.roles) {
+      throw new Error('User roles not found in token payload');
+    }
     return this.partnersService.findAll(query, user);
   }
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER, UserRole.VIEWER)
   findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: RequestUser) {
+    if (!user || !user.roles) {
+      throw new Error('User roles not found in token payload');
+    }
     return this.partnersService.findOne(id, user);
   }
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.FINANCE_MANAGER)
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBusinessPartnerDto, @CurrentUser() user: RequestUser) {
+    if (!user || !user.roles) {
+      throw new Error('User roles not found in token payload');
+    }
     return this.partnersService.update(id, dto, user);
   }
 
@@ -45,6 +58,9 @@ export class BusinessPartnersController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: RequestUser) {
+    if (!user || !user.roles) {
+      throw new Error('User roles not found in token payload');
+    }
     return this.partnersService.remove(id, user);
   }
 }

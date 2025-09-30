@@ -1,18 +1,22 @@
-// src/entities/user.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   Unique,
   Index,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { UserRole } from '../common/enums';
+import { UserRole } from '../common/enums/user-role.enum';
 import { Organization } from './organization.entity';
+import { Invoice } from './invoice.entity';
+import { BusinessPartner } from './business-partner.entity';
 
 @Entity('users')
-@Unique(['email', 'organizationId']) // Ensure unique email per organization
+@Unique(['email', 'organizationId'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   userId: string;
@@ -21,7 +25,7 @@ export class User {
   @Index()
   organizationId: string;
 
-  @Column({ unique: true })
+  @Column()
   email: string;
 
   @Column()
@@ -30,14 +34,26 @@ export class User {
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.VIEWER,
+    default: UserRole.GUEST,
   })
   role: UserRole;
 
-  // Relationships
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt: Date;
+
+  // Relations
   @ManyToOne(() => Organization, (organization) => organization.users, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
+
+  @OneToMany(() => Invoice, (invoice) => invoice.user)
+  invoices: Invoice[];
+
+  @OneToMany(() => BusinessPartner, (partner) => partner.createdBy)
+  businessPartners: BusinessPartner[];
 }

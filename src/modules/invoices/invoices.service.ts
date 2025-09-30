@@ -8,9 +8,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Invoice, InvoiceItem, ProductsServices } from '../../entities';
-import { CreateInvoiceDto, UpdateInvoiceDto, InvoiceQueryDto, CreateInvoiceItemDto } from './dto/invoice.dto';
-import { InvoiceStatus } from '../../common/enums';
+import { Invoice, InvoiceItem, ProductsServices, Payment } from '../../entities';
+import {
+  CreateInvoiceDto,
+  UpdateInvoiceDto,
+  InvoiceQueryDto,
+} from './dto/invoice.dto';
+import { InvoiceStatus } from '../../common/enums/invoice-status.enum';
 import { EventService } from '../event/event.service';
 import { AppEvent } from '../../common/enums/app-event.enum';
 
@@ -28,55 +32,67 @@ export class InvoicesService {
     @InjectRepository(ProductsServices)
     private productRepository: Repository<ProductsServices>,
 
+    @InjectRepository(Payment)
+    private paymentRepository: Repository<Payment>,
+
     private eventService: EventService,
   ) {}
 
-  // -------------------- CREATE INVOICE --------------------
-  async create(organizationId: string, createInvoiceDto: CreateInvoiceDto): Promise<Invoice> {
-    const { items, ...invoiceData } = createInvoiceDto;
-
+  // -------------------- PRIVATE HELPERS --------------------
+  private async prepareInvoiceItems(
+    items: (CreateInvoiceDto['items'] | UpdateInvoiceDto['items']),
+    organizationId: string,
+    invoiceId?: string,
+  ): Promise<{ invoiceItems: InvoiceItem[]; subtotal: number; totalTax: number }> {
     let subtotal = 0;
     let totalTax = 0;
 
     const invoiceItems: InvoiceItem[] = await Promise.all(
       items.map(async (item) => {
         const lineTotal = item.quantity * item.rate;
+        let taxAmount = 0;
+        let description = item.description;
+        let hsnSacCode = item.hsnSacCode;
 
         if (item.productId) {
           const product = await this.productRepository.findOne({
             where: { productId: item.productId, organizationId },
           });
-
           if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
 
-          const taxAmount = (lineTotal * Number(product.gstRatePercent)) / 100;
-          subtotal += lineTotal;
-          totalTax += taxAmount;
-
-          return this.invoiceItemRepository.create({
-            ...item,
-            description: product.description ?? item.description,
-            hsnSacCode: product.hsnSacCode,
-            taxAmount,
-            lineTotal: lineTotal + taxAmount,
-          });
-        } else if (item.gstRatePercent) {
-          const taxAmount = (lineTotal * item.gstRatePercent) / 100;
-          subtotal += lineTotal;
-          totalTax += taxAmount;
-
-          return this.invoiceItemRepository.create({
-            ...item,
-            taxAmount,
-            lineTotal: lineTotal + taxAmount,
-          });
+          taxAmount = parseFloat(((lineTotal * Number(product.gstRatePercent)) / 100).toFixed(2));
+          description = product.description ?? description;
+          hsnSacCode = product.hsnSacCode;
+        } else if (item.gstRatePercent !== undefined) {
+          taxAmount = parseFloat(((lineTotal * item.gstRatePercent) / 100).toFixed(2));
         } else {
           throw new BadRequestException(
             'Each item must have either a productId or a gstRatePercent defined',
           );
         }
+
+        subtotal += lineTotal;
+        totalTax += taxAmount;
+
+        return this.invoiceItemRepository.create({
+          ...item,
+          invoiceId,
+          description,
+          hsnSacCode,
+          taxAmount,
+          lineTotal: lineTotal + taxAmount,
+        });
       }),
     );
+
+    return { invoiceItems, subtotal, totalTax };
+  }
+
+  // -------------------- CREATE INVOICE --------------------
+  async create(organizationId: string, createInvoiceDto: CreateInvoiceDto): Promise<Invoice> {
+    const { items, ...invoiceData } = createInvoiceDto;
+
+    const { invoiceItems, subtotal, totalTax } = await this.prepareInvoiceItems(items, organizationId);
 
     const invoice = this.invoiceRepository.create({
       ...invoiceData,
@@ -88,15 +104,15 @@ export class InvoicesService {
       items: invoiceItems,
     });
 
-    const saved: Invoice = await this.invoiceRepository.save(invoice);
-    this.logger.log(`Created invoice: ${saved.invoiceId}`);
+    const savedInvoice = await this.invoiceRepository.save(invoice);
+    this.logger.log(`Created invoice: ${savedInvoice.invoiceId}`);
 
-    const fullInvoice = await this.findOne(organizationId, saved.invoiceId);
+    this.eventService.emit(AppEvent.INVOICE_CREATED, {
+      invoiceId: savedInvoice.invoiceId,
+      organizationId,
+    });
 
-    // Emit event after creation
-    this.eventService.emit(AppEvent.INVOICE_CREATED, { invoiceId: saved.invoiceId, organizationId });
-
-    return fullInvoice;
+    return this.findOne(organizationId, savedInvoice.invoiceId);
   }
 
   // -------------------- GET ALL INVOICES --------------------
@@ -112,21 +128,23 @@ export class InvoicesService {
       sortOrder = 'DESC',
     } = query;
 
-    const queryBuilder = this.invoiceRepository
+    const qb = this.invoiceRepository
       .createQueryBuilder('invoice')
       .leftJoinAndSelect('invoice.partner', 'partner')
       .leftJoinAndSelect('invoice.items', 'items')
       .leftJoinAndSelect('invoice.payments', 'payments')
       .where('invoice.organizationId = :organizationId', { organizationId });
 
-    if (status) queryBuilder.andWhere('invoice.status = :status', { status });
-    if (partnerId) queryBuilder.andWhere('invoice.partnerId = :partnerId', { partnerId });
-    if (fromDate) queryBuilder.andWhere('invoice.issueDate >= :fromDate', { fromDate });
-    if (toDate) queryBuilder.andWhere('invoice.issueDate <= :toDate', { toDate });
+    if (status) qb.andWhere('invoice.status = :status', { status });
+    if (partnerId) qb.andWhere('invoice.partnerId = :partnerId', { partnerId });
+    if (fromDate) qb.andWhere('invoice.issueDate >= :fromDate', { fromDate });
+    if (toDate) qb.andWhere('invoice.issueDate <= :toDate', { toDate });
 
-    queryBuilder.orderBy(`invoice.${sortBy}`, sortOrder).skip((page - 1) * limit).take(limit);
+    qb.orderBy(`invoice.${sortBy}`, sortOrder)
+      .skip((page - 1) * limit)
+      .take(limit);
 
-    const [invoices, total] = await queryBuilder.getManyAndCount();
+    const [invoices, total] = await qb.getManyAndCount();
 
     return {
       data: invoices,
@@ -147,6 +165,7 @@ export class InvoicesService {
     });
 
     if (!invoice) throw new NotFoundException(`Invoice with ID ${invoiceId} not found`);
+
     return invoice;
   }
 
@@ -167,49 +186,10 @@ export class InvoicesService {
 
       await this.invoiceItemRepository.delete({ invoiceId });
 
-      let subtotal = 0;
-      let totalTax = 0;
-
-      const invoiceItems: InvoiceItem[] = await Promise.all(
-        items.map(async (item) => {
-          const lineTotal = item.quantity * item.rate;
-
-          if (item.productId) {
-            const product = await this.productRepository.findOne({
-              where: { productId: item.productId, organizationId },
-            });
-
-            if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
-
-            const taxAmount = (lineTotal * Number(product.gstRatePercent)) / 100;
-            subtotal += lineTotal;
-            totalTax += taxAmount;
-
-            return this.invoiceItemRepository.create({
-              ...item,
-              invoiceId,
-              description: product.description ?? item.description,
-              hsnSacCode: product.hsnSacCode,
-              taxAmount,
-              lineTotal: lineTotal + taxAmount,
-            });
-          } else if (item.gstRatePercent) {
-            const taxAmount = (lineTotal * item.gstRatePercent) / 100;
-            subtotal += lineTotal;
-            totalTax += taxAmount;
-
-            return this.invoiceItemRepository.create({
-              ...item,
-              invoiceId,
-              taxAmount,
-              lineTotal: lineTotal + taxAmount,
-            });
-          } else {
-            throw new BadRequestException(
-              'Each item must have either a productId or a gstRatePercent defined',
-            );
-          }
-        }),
+      const { invoiceItems, subtotal, totalTax } = await this.prepareInvoiceItems(
+        items,
+        organizationId,
+        invoiceId,
       );
 
       await this.invoiceItemRepository.save(invoiceItems);
@@ -224,7 +204,7 @@ export class InvoicesService {
       Object.assign(invoice, updateInvoiceDto);
     }
 
-    const updated = await this.invoiceRepository.save(invoice);
+    const updatedInvoice = await this.invoiceRepository.save(invoice);
     this.logger.log(`Updated invoice: ${invoiceId}`);
 
     this.eventService.emit(AppEvent.INVOICE_UPDATED, { invoiceId, organizationId });
@@ -257,7 +237,7 @@ export class InvoicesService {
       throw new ConflictException('Paid invoices cannot be voided');
     }
 
-    invoice.status = InvoiceStatus.VOID;
+    invoice.status = InvoiceStatus.DRAFT; // or consider InvoiceStatus.VOIDED
     await this.invoiceRepository.save(invoice);
     this.logger.log(`Voided invoice: ${invoiceId}`);
 

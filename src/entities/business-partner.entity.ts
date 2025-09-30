@@ -2,21 +2,21 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
   OneToMany,
-  Index,
   Unique,
+  Index,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { PartnerType } from '../common/enums';
+import { PartnerType } from '../common/enums/partner-type.enum';
 import { Organization } from './organization.entity';
+import { User } from './user.entity';
 import { Invoice } from './invoice.entity';
-import { Address } from './organization.entity';
 
 @Entity('business_partners')
-@Unique(['organizationId', 'name']) // Prevent duplicate names inside an org
+@Unique(['organizationId', 'name'])
 export class BusinessPartner {
   @PrimaryGeneratedColumn('uuid')
   partnerId: string;
@@ -24,6 +24,10 @@ export class BusinessPartner {
   @Column('uuid')
   @Index()
   organizationId: string;
+
+  @Column('uuid')
+  @Index()
+  createdById: string; // creator user
 
   @Column({ length: 255 })
   name: string;
@@ -42,10 +46,10 @@ export class BusinessPartner {
   pan: string;
 
   @Column('jsonb', { nullable: true, default: {} })
-  billingAddress: Address;
+  billingAddress: Record<string, any>;
 
   @Column('jsonb', { nullable: true, default: {} })
-  shippingAddress: Address;
+  shippingAddress: Record<string, any>;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
@@ -53,12 +57,14 @@ export class BusinessPartner {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  // Relationships
-  @ManyToOne(() => Organization, (organization) => organization.businessPartners, {
-    onDelete: 'CASCADE',
-  })
+  // Relations
+  @ManyToOne(() => Organization, (org) => org.businessPartners, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
+
+  @ManyToOne(() => User, (user) => user.businessPartners)
+  @JoinColumn({ name: 'createdById' })
+  createdBy: User;
 
   @OneToMany(() => Invoice, (invoice) => invoice.partner)
   invoices: Invoice[];

@@ -14,6 +14,8 @@ import { GstrFilingType } from '../../../common/enums';
 // 🔹 Optional: Enum for E-Way Bill status
 export enum EwayBillStatus {
   ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  UPDATED = 'updated',
   EXPIRED = 'expired',
   CANCELLED = 'cancelled',
 }

@@ -11,9 +11,10 @@ import {
   Unique,
   Index,
 } from 'typeorm';
-import { InvoiceStatus } from '../common/enums';
+import { InvoiceStatus } from '../common/enums/invoice-status.enum';
 import { Organization } from './organization.entity';
 import { BusinessPartner } from './business-partner.entity';
+import { User } from './user.entity';
 import { InvoiceItem } from './invoice-item.entity';
 import { Payment } from './payment.entity';
 import { EwayBill } from './eway-bill.entity';
@@ -31,6 +32,10 @@ export class Invoice {
   @Column('uuid')
   @Index()
   partnerId: string;
+
+  @Column('uuid')
+  @Index()
+  userId: string; // creator
 
   @Column({ length: 50 })
   invoiceNumber: string;
@@ -62,10 +67,10 @@ export class Invoice {
   amountPaid: number;
 
   @Column({ length: 64, nullable: true })
-  irn: string; // Invoice Reference Number for e-invoicing
+  irn: string;
 
   @Column('text', { nullable: true })
-  qrCodeUrl: string; // URL to the signed QR code image
+  qrCodeUrl: string;
 
   @Column('text', { nullable: true })
   notes: string;
@@ -79,10 +84,8 @@ export class Invoice {
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  // Relationships
-  @ManyToOne(() => Organization, (organization) => organization.invoices, {
-    onDelete: 'CASCADE',
-  })
+  // Relations
+  @ManyToOne(() => Organization, (org) => org.invoices, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
 
@@ -90,11 +93,11 @@ export class Invoice {
   @JoinColumn({ name: 'partnerId' })
   partner: BusinessPartner;
 
-  @OneToMany(() => InvoiceItem, (item) => item.invoice, { 
-    cascade: true, 
-    eager: false, 
-    orphanedRowAction: 'delete' 
-  })
+  @ManyToOne(() => User, (user) => user.invoices)
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @OneToMany(() => InvoiceItem, (item) => item.invoice, { cascade: true, orphanedRowAction: 'delete' })
   items: InvoiceItem[];
 
   @OneToMany(() => Payment, (payment) => payment.invoice)

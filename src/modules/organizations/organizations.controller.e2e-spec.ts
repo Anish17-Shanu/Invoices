@@ -1,4 +1,4 @@
-// src/modules/organizations/organizations.e2e-spec.ts
+// src/modules/organizations/organizations.controller.e2e-spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ExecutionContext, CanActivate } from '@nestjs/common';
 import request from 'supertest';
@@ -8,18 +8,20 @@ import { OrganizationsModule } from './organizations.module';
 import { Organization } from '../../entities/organization.entity';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { OrganizationType } from '@/common/enums';
 
 describe('OrganizationsController (e2e)', () => {
   let app: INestApplication;
   let repository: Repository<Organization>;
 
-  const mockOrganization = {
+  const mockOrganization: Organization = {
     organizationId: '123e4567-e89b-12d3-a456-426614174000',
     workspaceId: '123e4567-e89b-12d3-a456-426614174001',
     name: 'Test Org',
     legalName: 'Test Org Pvt Ltd',
     gstin: '12ABCDE1234F1Z5',
     pan: 'ABCDE1234F',
+    type: OrganizationType.PROPRIETORSHIP,
     address: {
       street: '123 Test Street',
       city: 'Test City',
@@ -29,6 +31,12 @@ describe('OrganizationsController (e2e)', () => {
     },
     createdAt: new Date(),
     updatedAt: new Date(),
+    users: [],
+    businessPartners: [],
+    productsServices: [],
+    invoices: [],
+    payments: [],
+    gstrFilings: [],
   };
 
   const mockRepository = {
@@ -37,7 +45,13 @@ describe('OrganizationsController (e2e)', () => {
     findOne: jest.fn().mockResolvedValue(mockOrganization),
     find: jest.fn().mockResolvedValue([mockOrganization]),
     delete: jest.fn().mockResolvedValue({ affected: 1 }),
-    createQueryBuilder: jest.fn(),
+    createQueryBuilder: jest.fn(() => ({
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn().mockResolvedValue([[mockOrganization], 1]),
+    })),
   };
 
   // Mock AuthGuard to inject fake user
@@ -94,6 +108,7 @@ describe('OrganizationsController (e2e)', () => {
           name: 'Test Org',
           gstin: '12ABCDE1234F1Z5',
           pan: 'ABCDE1234F',
+          type: OrganizationType.PROPRIETORSHIP,
         })
         .expect(201)
         .expect((res) => {
@@ -101,6 +116,7 @@ describe('OrganizationsController (e2e)', () => {
             organizationId: mockOrganization.organizationId,
             workspaceId: mockOrganization.workspaceId,
             name: 'Test Org',
+            type: OrganizationType.PROPRIETORSHIP,
           });
         });
     });
@@ -117,6 +133,7 @@ describe('OrganizationsController (e2e)', () => {
           name: 'Duplicate Org',
           gstin: mockOrganization.gstin,
           pan: 'ZZZDE1234F',
+          type: OrganizationType.PROPRIETORSHIP,
         })
         .expect(409);
     });
@@ -133,6 +150,7 @@ describe('OrganizationsController (e2e)', () => {
           name: 'Duplicate PAN Org',
           gstin: '22ABCDE1234F1Z9',
           pan: mockOrganization.pan,
+          type: OrganizationType.PROPRIETORSHIP,
         })
         .expect(409);
     });
@@ -140,16 +158,6 @@ describe('OrganizationsController (e2e)', () => {
 
   describe('/GET organizations', () => {
     it('should return a list of organizations with meta', async () => {
-      // Mock query builder for pagination
-      const qb: any = {
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([[mockOrganization], 1]),
-      };
-      mockRepository.createQueryBuilder.mockReturnValue(qb);
-
       return request(app.getHttpServer())
         .get('/organizations?page=1&limit=10')
         .expect(200)

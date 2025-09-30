@@ -1,0 +1,185 @@
+{
+  "info": {
+    "_postman_id": "flocci-invoices-collection",
+    "name": "Flocci-Invoices API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_URL", "value": "http://localhost:3000/api/v1" },
+    { "key": "JWT", "value": "" },
+    { "key": "ORG_ID", "value": "" },
+    { "key": "PARTNER_ID", "value": "" },
+    { "key": "PRODUCT_ID", "value": "" },
+    { "key": "INVOICE_ID", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{BASE_URL}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"StrongPassword123\",\n  \"role\": \"VIEWER\",\n  \"organizationId\": \"{{ORG_ID}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{BASE_URL}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"StrongPassword123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Create Organization",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{JWT}}" }
+            ],
+            "url": "{{BASE_URL}}/organizations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Organization\",\n  \"gstin\": \"22AAAAA0000A1Z5\",\n  \"pan\": \"AAAAA0000A\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Organizations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations?page=1&limit=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Business Partners",
+      "item": [
+        {
+          "name": "Create Partner",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/business-partners",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Partner 1\",\n  \"type\": \"BOTH\",\n  \"gstin\": \"22AAAAA0000A1Z5\",\n  \"pan\": \"AAAAA0000A\",\n  \"billingAddress\": {\n    \"street\": \"123 Street\",\n    \"city\": \"City\",\n    \"state\": \"State\",\n    \"postalCode\": \"123456\",\n    \"country\": \"India\"\n  },\n  \"shippingAddress\": {\n    \"street\": \"456 Street\",\n    \"city\": \"City\",\n    \"state\": \"State\",\n    \"postalCode\": \"654321\",\n    \"country\": \"India\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "List Partners",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/business-partners?page=1&limit=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products/Services",
+      "item": [
+        {
+          "name": "Create Product/Service",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/products-services",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Service A\",\n  \"description\": \"Professional service\",\n  \"unitPrice\": 1000,\n  \"taxRate\": 18\n}"
+            }
+          }
+        },
+        {
+          "name": "List Products/Services",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/products-services"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoices",
+      "item": [
+        {
+          "name": "Create Invoice",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partnerId\": \"{{PARTNER_ID}}\",\n  \"invoiceNumber\": \"INV-001\",\n  \"status\": \"DRAFT\",\n  \"totalAmount\": 1000\n}"
+            }
+          }
+        },
+        {
+          "name": "List Invoices",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices/{{INVOICE_ID}}"
+          }
+        },
+        {
+          "name": "Update Invoice",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices/{{INVOICE_ID}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"totalAmount\": 1200\n}"
+            }
+          }
+        },
+        {
+          "name": "Send Invoice",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices/{{INVOICE_ID}}/send"
+          }
+        },
+        {
+          "name": "Void Invoice",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices/{{INVOICE_ID}}/void"
+          }
+        }
+      ]
+    }
+  ]
+}

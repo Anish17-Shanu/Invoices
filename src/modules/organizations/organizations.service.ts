@@ -34,15 +34,20 @@ export class OrganizationsService {
     try {
       const shortId = uuidv4().split('-')[0];
 
-      const pan = createOrganizationDto.pan ?? `PAN-${shortId}`.slice(0, 10);
-      const gstin = createOrganizationDto.gstin ?? `GSTIN-${shortId}`.slice(0, 15);
-      const name = createOrganizationDto.name ?? `Org-${shortId}`;
+      // Use user-provided PAN/GSTIN if available; otherwise generate random
+      const pan =
+        createOrganizationDto.pan?.trim() ||
+        `ABCDE${Math.floor(1000 + Math.random() * 9000)}F`; // 10 chars
+      const gstin =
+        createOrganizationDto.gstin?.trim() ||
+        `22ABCDE${Math.floor(1000 + Math.random() * 9000)}1Z5`; // 15 chars
+      const name = createOrganizationDto.name?.trim() || `Org-${shortId}`;
 
-      // WorkspaceId is internal only, not from DTO
+      // WorkspaceId is internal
       const organization = this.organizationRepository.create({
         ...createOrganizationDto,
-        gstin,
         pan,
+        gstin,
         name,
         workspaceId: uuidv4(),
       });
@@ -58,7 +63,7 @@ export class OrganizationsService {
       });
 
       return saved;
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === '23505') {
         if (error.constraint?.includes('gstin')) {
           throw new ConflictException('GSTIN already exists');
@@ -76,8 +81,8 @@ export class OrganizationsService {
     const shortId = uuidv4().split('-')[0];
     const defaultOrg: Partial<CreateOrganizationDto> = {
       name: `Org-${userEmail.split('@')[0]}`,
-      gstin: `GSTIN-${shortId}`.slice(0, 15),
-      pan: `PAN-${shortId}`.slice(0, 10),
+      pan: `ABCDE${Math.floor(1000 + Math.random() * 9000)}F`,
+      gstin: `22ABCDE${Math.floor(1000 + Math.random() * 9000)}1Z5`,
     };
 
     return this.create(defaultOrg);
@@ -115,9 +120,7 @@ export class OrganizationsService {
     });
 
     if (!organization) {
-      throw new NotFoundException(
-        `Organization with ID ${organizationId} not found`,
-      );
+      throw new NotFoundException(`Organization with ID ${organizationId} not found`);
     }
 
     return organization;
@@ -131,8 +134,7 @@ export class OrganizationsService {
     const organization = await this.findOne(organizationId);
 
     try {
-      // Keep workspaceId internal, don't allow updating via DTO
-      Object.assign(organization, updateOrganizationDto);
+      Object.assign(organization, updateOrganizationDto); // workspaceId remains internal
 
       const updated = await this.organizationRepository.save(organization);
 
@@ -144,7 +146,7 @@ export class OrganizationsService {
       });
 
       return updated;
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === '23505') {
         if (error.constraint?.includes('gstin')) {
           throw new ConflictException('GSTIN already exists');
@@ -162,9 +164,7 @@ export class OrganizationsService {
     const result = await this.organizationRepository.delete(organizationId);
 
     if (result.affected === 0) {
-      throw new NotFoundException(
-        `Organization with ID ${organizationId} not found`,
-      );
+      throw new NotFoundException(`Organization with ID ${organizationId} not found`);
     }
 
     this.logger.log(`Deleted organization: ${organizationId}`);

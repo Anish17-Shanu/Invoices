@@ -9,7 +9,7 @@ import {
   Min 
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { PartnerType } from '../../../common/enums';
+import { PartnerType } from '../../../common/enums/partner-type.enum';
 import { AddressDto } from '../../organizations/dto/organization.dto';
 
 // 🔹 Invoice Summary DTO for nested responses

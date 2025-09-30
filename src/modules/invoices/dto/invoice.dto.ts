@@ -5,7 +5,7 @@ import {
   IsArray, ArrayMinSize, IsNumber, IsIn 
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { InvoiceStatus } from '../../../common/enums';
+import { InvoiceStatus } from '../../../common/enums/invoice-status.enum';
 import { PaymentResponseDto } from '../../payments/dto/payment.dto';
 
 // 🔹 Invoice Item (Input DTO)

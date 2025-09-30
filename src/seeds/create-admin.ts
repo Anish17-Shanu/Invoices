@@ -1,13 +1,14 @@
 import { DataSource } from 'typeorm';
 import { User } from '../entities/user.entity';
-import { UserRole } from '../common/enums';
+import { UserRole } from '../common/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 export const createAdmin = async (dataSource: DataSource) => {
   const userRepo = dataSource.getRepository(User);
 
   const adminExists = await userRepo.findOne({
-    where: { email: 'admin@example.com' }, // Use email, not username
+    where: { email: 'admin@example.com' },
   });
 
   if (adminExists) return;
@@ -15,11 +16,11 @@ export const createAdmin = async (dataSource: DataSource) => {
   const passwordHash = await bcrypt.hash('Admin@123', 10);
 
   const adminUser = userRepo.create({
-    userId: 'some-uuid', // generate a UUID or use a library
+    userId: uuidv4(), // generate a UUID
     email: 'admin@example.com',
-    password: 'Admin@123',
+    password: passwordHash,
     organizationId: 'org-uuid', // replace with your org ID
-    role: UserRole.ADMIN, // ✅ Correct enum usage
+    role: UserRole.ADMIN, // matches enum type
   });
 
   await userRepo.save(adminUser);

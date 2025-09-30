@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { User } from '../../entities/user.entity';
-import { UserRole } from '../../common/enums';
+import { UserRole } from '../../common/enums/user-role.enum'; // ensure exact path
 
 @Injectable()
 export class AuthService {
@@ -32,7 +32,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       organizationId: user.organizationId,
-      roles: [user.role], // array for cross-org scenarios
+      roles: [user.role],
     };
 
     return { access_token: this.jwtService.sign(payload) };
@@ -44,7 +44,8 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    const role: UserRole = registerDto.role ?? UserRole.VIEWER;
+    // Use the default role from DTO (already UserRole.VIEWER if undefined)
+    const role: UserRole = registerDto.role;
 
     const user: User = await this.usersService.createUser({
       email: registerDto.email,

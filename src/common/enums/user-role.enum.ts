@@ -6,6 +6,7 @@ export enum UserRole {
   PARTNER = 'partner',
   ACCOUNTANT = 'accountant',
   AUDITOR = 'auditor',
-  GUEST = 'guest', // optional for read-only users
+  GUEST = 'guest',
+  VIEWER = 'viewer', // optional for read-only users
   // add any additional roles specific to your system here
 }

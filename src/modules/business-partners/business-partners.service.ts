@@ -112,16 +112,31 @@ export class BusinessPartnersService {
   }
 
   // 🔹 Helper: Convert entity to response DTO
-  private async toResponseDto(partner: BusinessPartner, includeInvoices = false): Promise<BusinessPartnerResponseDto> {
+  private async toResponseDto(
+    partner: BusinessPartner,
+    includeInvoices = false
+  ): Promise<BusinessPartnerResponseDto> {
     const dto: BusinessPartnerResponseDto = {
       partnerId: partner.partnerId,
       organizationId: partner.organizationId,
       name: partner.name,
-      type: partner.type,
+      type: partner.type, // ensure PartnerType import matches
       gstin: partner.gstin,
       pan: partner.pan,
-      billingAddress: partner.billingAddress,
-      shippingAddress: partner.shippingAddress,
+      billingAddress: {
+        street: partner.billingAddress?.street || '',
+        city: partner.billingAddress?.city || '',
+        state: partner.billingAddress?.state || '',
+        postalCode: partner.billingAddress?.postalCode || '',
+        country: partner.billingAddress?.country || '',
+      },
+      shippingAddress: {
+        street: partner.shippingAddress?.street || '',
+        city: partner.shippingAddress?.city || '',
+        state: partner.shippingAddress?.state || '',
+        postalCode: partner.shippingAddress?.postalCode || '',
+        country: partner.shippingAddress?.country || '',
+      },
       createdAt: partner.createdAt,
       updatedAt: partner.updatedAt,
       invoices: undefined,
@@ -142,4 +157,5 @@ export class BusinessPartnersService {
 
     return dto;
   }
+
 }

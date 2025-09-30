@@ -55,8 +55,11 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Global guards (DI-compliant)
-  app.useGlobalGuards(app.get(AuthGuard), new RolesGuard(reflector));
+  // 🔹 Correct DI for global guards
+  const authGuard = app.get(AuthGuard); // inject AuthGuard properly
+  const rolesGuard = new RolesGuard(reflector); // RolesGuard needs Reflector
+
+  app.useGlobalGuards(authGuard, rolesGuard);
 
   // Swagger setup
   const swaggerConfig = new DocumentBuilder()
@@ -74,7 +77,6 @@ async function bootstrap() {
     )
     .addTag('Organizations', 'Organization management')
     .addTag('Business Partners', 'Customer and vendor management')
-    //.addTag('Products & Services', 'Product and service catalog')
     .addTag('Invoices', 'Invoice management and operations')
     .addTag('Payments', 'Payment recording and tracking')
     .addTag('Compliance', 'GST and E-Way Bill compliance')

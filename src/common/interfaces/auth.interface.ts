@@ -1,8 +1,5 @@
 import { UserRole } from '../enums';
 
-/**
- * Payload structure for JWT tokens
- */
 export interface JwtPayload {
   /** Unique user ID (JWT subject) */
   sub: string;
@@ -51,4 +48,3 @@ export interface RequestUser {
   iat?: number;
   exp?: number;
 }
-

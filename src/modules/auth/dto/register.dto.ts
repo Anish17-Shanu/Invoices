@@ -1,7 +1,7 @@
 // src/modules/auth/dto/register.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
-import { UserRole } from '../../../common/enums';
+import { UserRole } from '../../../common/enums/user-role.enum';
 
 export class RegisterDto {
   @ApiProperty({

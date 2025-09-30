@@ -3,15 +3,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrganizationsService } from './organizations.service';
 import { OrganizationsController } from './organizations.controller';
 import { Organization } from '../../entities/organization.entity';
-import { EventModule } from '../event/event.module'; // ✅ Import EventModule
+import { EventModule } from '../event/event.module'; // EventModule for event triggers
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Organization]),
-    EventModule, // ✅ Needed for EventService injection
+    EventModule, // Needed for event injection
   ],
   controllers: [OrganizationsController],
   providers: [OrganizationsService],
-  exports: [OrganizationsService],
+  exports: [OrganizationsService], // Export like AuthService
 })
 export class OrganizationsModule {}

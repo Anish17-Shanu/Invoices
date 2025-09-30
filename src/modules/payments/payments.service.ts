@@ -6,6 +6,7 @@ import { Invoice } from '../../entities/invoice.entity';
 import { CreatePaymentDto, PaymentResponseDto } from './dto/payment.dto';
 import { EventService } from '../event/event.service';
 import { AppEvent } from '../../common/enums/app-event.enum';
+import { RequestUser } from '../../common/interfaces/auth.interface';
 
 @Injectable()
 export class PaymentsService {
@@ -20,7 +21,7 @@ export class PaymentsService {
   ) {}
 
   // -------------------- CREATE PAYMENT --------------------
-  async createPayment(invoiceId: string, dto: CreatePaymentDto): Promise<PaymentResponseDto> {
+  async createPayment(invoiceId: string, dto: CreatePaymentDto, user: RequestUser): Promise<PaymentResponseDto> {
     const invoice = await this.invoiceRepo.findOne({ where: { invoiceId } });
     if (!invoice) throw new NotFoundException('Invoice not found');
 
@@ -42,15 +43,17 @@ export class PaymentsService {
     invoice.amountPaid = totalPaid + dto.amount;
     await this.invoiceRepo.save(invoice);
 
-    // 🔹 Emit event after creation
+    this.logger.log(`User ${user.userId} created payment ${payment.paymentId} for invoice ${invoiceId}`);
+
+    // Emit event
     this.eventService.emit(AppEvent.PAYMENT_CREATED, {
       paymentId: payment.paymentId,
       invoiceId: invoice.invoiceId,
       organizationId: invoice.organizationId,
       amount: payment.amount,
+      createdBy: user.userId,
     });
 
-    this.logger.log(`Payment ${payment.paymentId} created for invoice ${invoiceId}`);
     return this.toPaymentResponseDto(payment);
   }
 
@@ -68,28 +71,29 @@ export class PaymentsService {
   }
 
   // -------------------- UPDATE PAYMENT --------------------
-  async updatePayment(paymentId: string, dto: Partial<CreatePaymentDto>): Promise<PaymentResponseDto> {
+  async updatePayment(paymentId: string, dto: Partial<CreatePaymentDto>, user: RequestUser): Promise<PaymentResponseDto> {
     const payment = await this.paymentRepo.findOne({ where: { paymentId }, relations: ['invoice'] });
     if (!payment) throw new NotFoundException('Payment not found');
 
     Object.assign(payment, dto);
     await this.paymentRepo.save(payment);
 
-    // Recalculate invoice amountPaid
+    // Recalculate totalPaid for the invoice
     const payments = await this.paymentRepo.find({ where: { invoiceId: payment.invoiceId } });
-    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-    payment.invoice.amountPaid = totalPaid;
+    payment.invoice.amountPaid = payments.reduce((sum, p) => sum + p.amount, 0);
     await this.invoiceRepo.save(payment.invoice);
 
-    // 🔹 Emit event after update
+    this.logger.log(`User ${user.userId} updated payment ${paymentId}`);
+
+    // Emit event
     this.eventService.emit(AppEvent.PAYMENT_UPDATED, {
       paymentId: payment.paymentId,
       invoiceId: payment.invoiceId,
       organizationId: payment.organizationId,
       amount: payment.amount,
+      updatedBy: user.userId,
     });
 
-    this.logger.log(`Payment ${paymentId} updated`);
     return this.toPaymentResponseDto(payment);
   }
 

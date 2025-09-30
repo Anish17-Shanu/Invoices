@@ -1,3 +1,8 @@
+// src/common/enums/index.ts
+
+// ------------------------
+// Core Enums
+// ------------------------
 export enum OrganizationType {
   PROPRIETORSHIP = 'proprietorship',
   PARTNERSHIP = 'partnership',
@@ -11,11 +16,13 @@ export enum UserRole {
   FINANCE_MANAGER = 'finance_manager',
   SALES = 'sales',
   VIEWER = 'viewer',
+  GUEST = 'GUEST',
 }
 
 export enum PartnerType {
   CUSTOMER = 'customer',
   VENDOR = 'vendor',
+  BOTH = "BOTH",
 }
 
 export enum InvoiceStatus {
@@ -46,4 +53,9 @@ export enum GstrFilingStatus {
   PENDING = 'pending',
   FILED = 'filed',
   ERROR = 'error',
+}
+export enum EwayBillStatus {
+  GENERATED = 'generated',
+  CANCELLED = 'cancelled',
+  UPDATED = 'updated',
 }

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
-import { UserRole } from '../../common/enums';
+import { UserRole } from '../../common/enums/user-role.enum'; // Correct import
 import { OrganizationsService } from '../organizations/organizations.service';
 
 @Injectable()
@@ -37,12 +37,15 @@ export class UsersService {
       orgId = org.organizationId;
     }
 
-    const user = this.userRepo.create({
+    // Type-safe creation using DeepPartial<User>
+    const userData: Partial<User> = {
       email: data.email,
       password: data.password,
       role: data.role ?? UserRole.VIEWER,
       organizationId: orgId,
-    });
+    };
+
+    const user = this.userRepo.create(userData);
 
     return this.userRepo.save(user);
   }
