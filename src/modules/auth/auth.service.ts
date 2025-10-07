@@ -1,17 +1,24 @@
 // src/modules/auth/auth.service.ts
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { User } from '../../entities/user.entity';
-import { UserRole } from '../../common/enums/user-role.enum'; // ensure exact path
+import { UserRole } from '../../common/enums/user-role.enum';
+import { OrganizationsService } from '../organizations/organizations.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly organizationsService: OrganizationsService,
   ) {}
 
   async validateUser(email: string, password: string) {
@@ -35,33 +42,65 @@ export class AuthService {
       roles: [user.role],
     };
 
-    return { access_token: this.jwtService.sign(payload) };
+    return {
+      success: true,
+      message: 'Login successful',
+      access_token: this.jwtService.sign(payload),
+      user,
+    };
   }
 
   async register(registerDto: RegisterDto) {
-    const existing = await this.usersService.findByEmail(registerDto.email);
-    if (existing) throw new ConflictException('Email already registered');
+    try {
+      const existing = await this.usersService.findByEmail(registerDto.email);
+      if (existing) {
+        throw new ConflictException('Email already registered');
+      }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+      const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    // Use the default role from DTO (already UserRole.VIEWER if undefined)
-    const role: UserRole = registerDto.role;
+      let organizationId = registerDto.organizationId;
+      if (!organizationId) {
+        const org = await this.organizationsService.create({
+          name: `${registerDto.email.split('@')[0]} Org`,
+        });
+        organizationId = org.organizationId;
+      }
 
-    const user: User = await this.usersService.createUser({
-      email: registerDto.email,
-      password: hashedPassword,
-      role,
-      organizationId: registerDto.organizationId,
-    });
+      // 🔧 Normalize role (ensure it matches DB enum format)
+      const role = (registerDto.role ?? UserRole.VIEWER).toLowerCase() as UserRole;
 
-    const payload = {
-      sub: user.userId,
-      email: user.email,
-      role: user.role,
-      organizationId: user.organizationId,
-      roles: [user.role],
-    };
+      const user: User = await this.usersService.createUser({
+        email: registerDto.email,
+        password: hashedPassword,
+        role,
+        organizationId,
+      });
 
-    return { access_token: this.jwtService.sign(payload), user };
+      const payload = {
+        sub: user.userId,
+        email: user.email,
+        role: user.role,
+        organizationId: user.organizationId,
+        roles: [user.role],
+      };
+
+      return {
+        success: true,
+        message: 'User registered successfully',
+        access_token: this.jwtService.sign(payload),
+        user,
+      };
+    } catch (err) {
+      console.error('🔥 Register error:', err);
+
+      // ✅ Don’t wrap known exceptions
+      if (err instanceof ConflictException || err instanceof UnauthorizedException) {
+        throw err;
+      }
+
+      // ✅ Handle bcrypt errors or other unknown issues
+      throw new InternalServerErrorException(err.message || 'Registration failed');
+    }
   }
 }

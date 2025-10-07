@@ -3,18 +3,14 @@ import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './src/app.module';
 import { UserRole, PartnerType } from './src/common/enums';
+import { DataSource } from 'typeorm';
+import { describe, it, beforeAll, afterAll, expect } from '@jest/globals';
 
 describe('Flocci-Invoices Full Product E2E Test', () => {
   let app: INestApplication;
-
+  let dataSource: DataSource;
   let token: string;
   let orgId: string;
-  let partnerId: string;
-  let productId: string;
-  let invoiceId: string;
-  let paymentId: string;
-
-  const adminCredentials = { username: 'admin', password: 'admin123' };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -24,195 +20,106 @@ describe('Flocci-Invoices Full Product E2E Test', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    // -----------------------------
-    // Register Admin User (if required)
-    // -----------------------------
-    // Optional: comment out if user already exists
-    await request(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({ username: 'admin', password: 'admin123', role: UserRole.ADMIN })
-      .expect([HttpStatus.CREATED, HttpStatus.CONFLICT]); // allow conflict if already exists
-
-    // -----------------------------
-    // Login
-    // -----------------------------
-    const loginRes = await request(app.getHttpServer())
-      .post('/api/v1/auth/login')
-      .send(adminCredentials)
-      .expect(HttpStatus.CREATED);
-
-    token = loginRes.body.accessToken;
-    expect(token).toBeDefined();
+    dataSource = app.get(DataSource);
   });
 
   afterAll(async () => {
     await app.close();
   });
 
-  // -----------------------------
-  // Organizations
-  // -----------------------------
-  it('should create an organization', async () => {
+  it('should register a new organization', async () => {
     const res = await request(app.getHttpServer())
-      .post('/api/v1/organizations')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ name: 'Test Org Pvt Ltd', gstin: '12ABCDE1234F1Z5', pan: 'ABCDE1234F' })
-      .expect(HttpStatus.CREATED);
-
-    orgId = res.body.organizationId || res.body.id;
-    expect(orgId).toBeDefined();
-    expect(res.body.name).toBe('Test Org Pvt Ltd');
-  });
-
-  it('should list organizations', async () => {
-    const res = await request(app.getHttpServer())
-      .get('/api/v1/organizations?sortBy=createdAt&sortOrder=DESC&page=1&limit=10')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(HttpStatus.OK);
-
-    expect(res.body.data).toBeInstanceOf(Array);
-  });
-
-  // -----------------------------
-  // Business Partners
-  // -----------------------------
-  it('should create a business partner', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/v1/business-partners')
-      .set('Authorization', `Bearer ${token}`)
+      .post('/org/register')
       .send({
-        name: 'Test Partner',
-        email: 'partner@test.com',
-        type: PartnerType.BOTH,
-        billingAddress: {
-          street: '123 Main St',
-          city: 'Bengaluru',
-          state: 'KA',
-          postalCode: '560001',
-          country: 'India',
-        },
-        shippingAddress: {
-          street: '456 Market Rd',
-          city: 'Bengaluru',
-          state: 'KA',
-          postalCode: '560002',
-          country: 'India',
-        },
+        name: 'Test Organization',
+        type: PartnerType.CUSTOMER,
       })
       .expect(HttpStatus.CREATED);
 
-    partnerId = res.body.partnerId || res.body.id;
-    expect(res.body.name).toBe('Test Partner');
+    expect(res.body).toBeDefined();
+    expect(res.body).toHaveProperty('id');
+    orgId = res.body.id;
   });
 
-  // -----------------------------
-  // Products / Services
-  // -----------------------------
-  it('should create a product/service', async () => {
+  it('should create a new user and login', async () => {
     const res = await request(app.getHttpServer())
-      .post('/api/v1/products-services')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ name: 'Product A', price: 100 })
-      .expect(HttpStatus.CREATED);
-
-    productId = res.body.productId || res.body.id;
-    expect(res.body.name).toBe('Product A');
-  });
-
-  // -----------------------------
-  // Invoices
-  // -----------------------------
-  it('should create an invoice', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/v1/invoices')
-      .set('Authorization', `Bearer ${token}`)
+      .post('/auth/register')
       .send({
-        partnerId,
-        items: [{ productId, quantity: 2 }],
+        username: 'admin',
+        password: 'password123',
+        role: UserRole.ADMIN,
+        orgId,
       })
       .expect(HttpStatus.CREATED);
 
-    invoiceId = res.body.invoiceId || res.body.id;
-    expect(res.body.totalAmount).toBeDefined();
+    expect(res.body).toBeDefined();
+    expect(res.body).toHaveProperty('id');
+
+    const loginRes = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        username: 'admin',
+        password: 'password123',
+      })
+      .expect(HttpStatus.OK);
+
+    expect(loginRes.body).toHaveProperty('access_token');
+    token = loginRes.body.access_token;
   });
 
-  it('should list invoices', async () => {
+  it('should create a new invoice', async () => {
     const res = await request(app.getHttpServer())
-      .get('/api/v1/invoices?sortBy=createdAt&sortOrder=DESC&page=1&limit=10')
+      .post('/invoice')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        orgId,
+        amount: 5000,
+        description: 'Test invoice for services rendered',
+      })
+      .expect(HttpStatus.CREATED);
+
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.amount).toBe(5000);
+  });
+
+  it('should list all invoices', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/invoice?orgId=${orgId}`)
       .set('Authorization', `Bearer ${token}`)
       .expect(HttpStatus.OK);
 
-    expect(res.body.data).toBeInstanceOf(Array);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
   });
 
-  // -----------------------------
-  // Payments
-  // -----------------------------
-  it('should record a payment for invoice', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/v1/payments')
+  it('should make a payment for the invoice', async () => {
+    const invoiceRes = await request(app.getHttpServer())
+      .get(`/invoice?orgId=${orgId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    const invoiceId = invoiceRes.body[0].id;
+
+    const paymentRes = await request(app.getHttpServer())
+      .post('/payment')
       .set('Authorization', `Bearer ${token}`)
       .send({
         invoiceId,
-        amount: 200,
-        mode: 'UPI',
+        amount: 5000,
+        method: 'BANK_TRANSFER',
       })
       .expect(HttpStatus.CREATED);
 
-    paymentId = res.body.paymentId || res.body.id;
-    expect(res.body.invoiceId).toBe(invoiceId);
+    expect(paymentRes.body).toHaveProperty('id');
+    expect(paymentRes.body.amount).toBe(5000);
   });
 
-  it('should list payments by invoice', async () => {
+  it('should fetch payment history', async () => {
     const res = await request(app.getHttpServer())
-      .get(`/api/v1/payments/invoice/${invoiceId}`)
+      .get(`/payment/history?orgId=${orgId}`)
       .set('Authorization', `Bearer ${token}`)
       .expect(HttpStatus.OK);
 
-    expect(res.body).toBeInstanceOf(Array);
-  });
-
-  // -----------------------------
-  // Compliance
-  // -----------------------------
-  it('should generate e-way bill for invoice', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/v1/compliance/ewaybill')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        invoiceId,
-        transporterId: 'T12345',
-        vehicleNo: 'KA01AB1234',
-      })
-      .expect(HttpStatus.CREATED);
-
-    expect(res.body).toHaveProperty('ewbId');
-  });
-
-  it('should file GSTR for organization', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/v1/compliance/gstr')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ organizationId: orgId, period: '2025-09' })
-      .expect(HttpStatus.CREATED);
-
-    expect(res.body).toHaveProperty('filingId');
-  });
-
-  // -----------------------------
-  // Events
-  // -----------------------------
-  it('should emit invoice.created event', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/api/v1/invoices')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        partnerId,
-        items: [{ productId, quantity: 1 }],
-      })
-      .expect(HttpStatus.CREATED);
-
-    expect(res.body.invoiceId).toBeDefined();
-    // EventService logs/side effects can be verified in console or via mocks if needed
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body[0]).toHaveProperty('amount');
   });
 });

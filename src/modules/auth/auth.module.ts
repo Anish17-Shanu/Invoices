@@ -7,17 +7,21 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
+import { OrganizationsModule } from '../organizations/organizations.module'; // ✅ Added
 
 @Module({
   imports: [
     UsersModule,
+    OrganizationsModule, // ✅ Required for OrganizationsService injection
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN', '7d') },
+        signOptions: {
+          expiresIn: config.get<string>('JWT_EXPIRES_IN', '7d'),
+        },
       }),
     }),
   ],
