@@ -12,9 +12,9 @@ services:
       - NODE_ENV=development
       - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
-      - DATABASE_USERNAME=flocci_user
-      - DATABASE_PASSWORD=flocci_password
-      - DATABASE_NAME=flocci_invoices
+      - DATABASE_USERNAME=invoices_user
+      - DATABASE_PASSWORD=change_me
+      - DATABASE_NAME=invoices_db
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - JWT_SECRET=dev-jwt-secret-change-in-production
     depends_on:
@@ -35,16 +35,16 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_USER=flocci_user
-      - POSTGRES_PASSWORD=flocci_password
-      - POSTGRES_DB=flocci_invoices
+      - POSTGRES_USER=invoices_user
+      - POSTGRES_PASSWORD=change_me
+      - POSTGRES_DB=invoices_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./flocci-invoices-schema-design.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./invoices-schema-design.sql:/docker-entrypoint-initdb.d/01-schema.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U flocci_user -d flocci_invoices"]
+      test: ["CMD-SHELL", "pg_isready -U invoices_user -d invoices_db"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -54,8 +54,8 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     environment:
-      - RABBITMQ_DEFAULT_USER=flocci
-      - RABBITMQ_DEFAULT_PASS=flocci_password
+      - RABBITMQ_DEFAULT_USER=invoices
+      - RABBITMQ_DEFAULT_PASS=change_me
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -75,4 +75,4 @@ volumes:
 
 networks:
   default:
-    name: flocci-network
+    name: invoices-network

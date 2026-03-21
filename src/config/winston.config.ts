@@ -9,7 +9,7 @@ const logFormat = format.combine(
 export const winstonConfig = {
   level: process.env.LOG_LEVEL || 'info',
   format: logFormat,
-  defaultMeta: { service: 'flocci-invoices-srv' },
+  defaultMeta: { service: 'invoices-srv' },
   transports: [
     new transports.Console({
       format: format.combine(

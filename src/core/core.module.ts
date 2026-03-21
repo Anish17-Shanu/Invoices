@@ -4,6 +4,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { WinstonModule } from 'nest-winston';
 import databaseConfig from '../config/database.config';
+import { validateEnv } from '../config/env.validation';
 import { winstonConfig } from '../config/winston.config';
 import {
   GstrFiling,
@@ -24,6 +25,7 @@ import {
       isGlobal: true,
       load: [databaseConfig],
       envFilePath: ['.env.local', '.env'],
+      validate: validateEnv,
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -34,7 +36,7 @@ import {
         username: configService.get<string>('database.username'),
         password: configService.get<string>('database.password'),
         database: configService.get<string>('database.database'),
-        schema: 'flocci',
+        schema: 'invoices',
         ssl: configService.get<boolean>('database.ssl'),
         entities: [
           GstrFiling,

@@ -1,4 +1,3 @@
-// src/modules/auth/auth.module.ts
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -7,12 +6,13 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
-import { OrganizationsModule } from '../organizations/organizations.module'; // ✅ Added
+import { OrganizationsModule } from '../organizations/organizations.module';
 
 @Module({
   imports: [
+    ConfigModule,
     UsersModule,
-    OrganizationsModule, // ✅ Required for OrganizationsService injection
+    OrganizationsModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

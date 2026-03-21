@@ -1,8 +1,8 @@
 {
-  "name": "flocci-invoices-srv",
+  "name": "invoices-srv",
   "version": "1.0.0",
-  "description": "Flocci Invoices Microservice - Core financial transactions service for multi-tenant GST compliant invoicing",
-  "author": "Flocci Team",
+  "description": "Standalone invoices service for multi-tenant GST-compliant invoicing",
+  "author": "Anish Kumar",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

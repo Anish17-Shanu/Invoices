@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { AppModule } from '../src/app.module';
+import { AppModule } from './app.module';
 import { describe, it, beforeAll, afterAll, expect } from '@jest/globals';
 
 describe('Organizations & Auth Flow (e2e)', () => {

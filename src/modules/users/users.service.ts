@@ -49,4 +49,14 @@ export class UsersService {
 
     return this.userRepo.save(user);
   }
+
+  async updatePassword(userId: string, password: string): Promise<User | null> {
+    const user = await this.userRepo.findOne({ where: { userId } });
+    if (!user) {
+      return null;
+    }
+
+    user.password = password;
+    return this.userRepo.save(user);
+  }
 }

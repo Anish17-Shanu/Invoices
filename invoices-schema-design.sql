@@ -11,10 +11,10 @@ CREATE TYPE gstr_filing_type AS ENUM ('GSTR1', 'GSTR3B');
 CREATE TYPE gstr_filing_status AS ENUM ('pending', 'filed', 'error');
 
 -- Organizations Table (Replaces 'Company')
--- A legal entity within a Flocci Workspace
+-- A legal entity within an invoice workspace
 CREATE TABLE organizations (
     organization_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    workspace_id UUID NOT NULL, -- Foreign key to the central Flocci OS Workspaces table
+    workspace_id UUID NOT NULL, -- Workspace or tenant identifier from the host platform
     name VARCHAR(255) NOT NULL,
     legal_name VARCHAR(255),
     gstin VARCHAR(15) UNIQUE NOT NULL,
@@ -24,10 +24,10 @@ CREATE TABLE organizations (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Users Table (Reference to Flocci OS Identity)
+-- Users Table (Reference to the host identity provider)
 -- Stores user's role within a specific organization
 CREATE TABLE users (
-    user_id UUID PRIMARY KEY, -- This ID MUST match the Flocci OS User ID from JWT
+    user_id UUID PRIMARY KEY, -- This ID should match the user ID carried in the JWT
     organization_id UUID REFERENCES organizations(organization_id) ON DELETE CASCADE,
     role user_role NOT NULL DEFAULT 'viewer',
     UNIQUE(user_id, organization_id)

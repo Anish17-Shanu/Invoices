@@ -10,8 +10,8 @@ export interface JwtPayload {
   /** Single primary role for the user */
   role: UserRole;
 
-  /** Workspace the user belongs to */
-  workspaceId: string;
+  /** Optional workspace identifier for legacy integrations */
+  workspaceId?: string;
 
   /** Organization the user is currently scoped to (optional) */
   organizationId?: string;
@@ -39,7 +39,7 @@ export interface RequestUser {
   /** Multiple roles for cross-org */
   roles: UserRole[];
 
-  workspaceId: string;
+  workspaceId?: string;
   organizationId?: string;
 
   /** Optional display name */

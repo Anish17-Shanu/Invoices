@@ -6,7 +6,7 @@ import { UserRole, PartnerType } from './src/common/enums';
 import { DataSource } from 'typeorm';
 import { describe, it, beforeAll, afterAll, expect } from '@jest/globals';
 
-describe('Flocci-Invoices Full Product E2E Test', () => {
+describe('Invoices Service Full Product E2E Test', () => {
   let app: INestApplication;
   let dataSource: DataSource;
   let token: string;

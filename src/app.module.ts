@@ -9,6 +9,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { ComplianceModule } from './modules/compliance/compliance.module';
 import { EventModule } from './modules/event/event.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { HealthModule } from './modules/health/health.module';
 
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -24,7 +25,8 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     InvoicesModule,            
     PaymentsModule,            
     ComplianceModule,          
-    EventModule,               
+    EventModule,
+    HealthModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },

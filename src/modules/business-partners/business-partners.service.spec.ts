@@ -8,6 +8,8 @@ import { EventService } from '../event/event.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { RequestUser } from '../../common/interfaces/auth.interface';
 import { UserRole } from '../../common/enums';
+import { PartnerType } from '../../common/enums/partner-type.enum';
+import { CreateBusinessPartnerDto, UpdateBusinessPartnerDto, BusinessPartnerQueryDto } from './dto/business-partner.dto';
 
 describe('BusinessPartnersService', () => {
   let service: BusinessPartnersService;
@@ -28,7 +30,7 @@ describe('BusinessPartnersService', () => {
     partnerId: 'partner-1',
     organizationId: 'org-123',
     name: 'Test Partner',
-    type: 'vendor',
+    type: PartnerType.VENDOR,
     gstin: null,
     pan: null,
     createdAt: new Date(),
@@ -76,61 +78,63 @@ describe('BusinessPartnersService', () => {
 
   describe('create', () => {
     it('should create a partner successfully', async () => {
-      const result = await service.create({ name: 'New Partner', type: 'vendor' } as any, mockUser);
+      const dto: CreateBusinessPartnerDto = { name: 'New Partner', type: PartnerType.VENDOR };
+      const result = await service.create(dto, mockUser, mockUser.organizationId);
       expect(result.partnerId).toBeDefined();
       expect(eventService.emit).toHaveBeenCalled();
     });
 
     it('should throw if GSTIN exists', async () => {
-      await expect(
-        service.create({ name: 'Partner', gstin: '123' } as any, mockUser),
-      ).rejects.toThrow(BadRequestException);
+      const dto: CreateBusinessPartnerDto = { name: 'Partner', gstin: '123', type: PartnerType.VENDOR };
+      await expect(service.create(dto, mockUser, mockUser.organizationId)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw if PAN exists', async () => {
-      await expect(
-        service.create({ name: 'Partner', pan: 'PAN123' } as any, mockUser),
-      ).rejects.toThrow(BadRequestException);
+      const dto: CreateBusinessPartnerDto = { name: 'Partner', pan: 'PAN123', type: PartnerType.VENDOR };
+      await expect(service.create(dto, mockUser, mockUser.organizationId)).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('findAll', () => {
     it('should return partners list', async () => {
-      const result = await service.findAll({ page: 1, limit: 10 } as any, mockUser);
+      const query: BusinessPartnerQueryDto = { page: 1, limit: 10, type: PartnerType.VENDOR };
+      const result = await service.findAll(query, mockUser, mockUser.organizationId);
       expect(result).toHaveLength(1);
     });
   });
 
   describe('findOne', () => {
     it('should return partner if found', async () => {
-      const result = await service.findOne('partner-1', mockUser);
+      const result = await service.findOne('partner-1', mockUser, mockUser.organizationId);
       expect(result.partnerId).toBe('partner-1');
     });
 
     it('should throw if partner not found', async () => {
-      await expect(service.findOne('unknown', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('unknown', mockUser, mockUser.organizationId)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('update', () => {
     it('should update partner', async () => {
-      const result = await service.update('partner-1', { name: 'Updated' } as any, mockUser);
+      const dto: UpdateBusinessPartnerDto = { name: 'Updated', type: PartnerType.VENDOR };
+      const result = await service.update('partner-1', dto, mockUser, mockUser.organizationId);
       expect(result.name).toBe('Updated');
     });
 
     it('should throw if partner not found', async () => {
-      await expect(service.update('unknown', { name: 'X' } as any, mockUser)).rejects.toThrow(NotFoundException);
+      const dto: UpdateBusinessPartnerDto = { name: 'X', type: PartnerType.VENDOR };
+      await expect(service.update('unknown', dto, mockUser, mockUser.organizationId)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('remove', () => {
     it('should remove partner', async () => {
-      const result = await service.remove('partner-1', mockUser);
+      const result = await service.remove('partner-1', mockUser, mockUser.organizationId);
       expect(result).toBeUndefined();
     });
 
     it('should throw if partner not found', async () => {
-      await expect(service.remove('unknown', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.remove('unknown', mockUser, mockUser.organizationId)).rejects.toThrow(NotFoundException);
     });
   });
 });

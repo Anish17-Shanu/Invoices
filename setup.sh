@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Flocci Invoices Service Development Setup Script
+# Invoices Service Development Setup Script
 
 set -e
 
-echo "🚀 Setting up Flocci Invoices Service..."
+echo "🚀 Setting up Invoices Service..."
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
@@ -46,7 +46,7 @@ echo "⏳ Waiting for PostgreSQL to be ready..."
 sleep 10
 
 # Check if PostgreSQL is ready
-until docker-compose exec postgres pg_isready -U flocci_user -d flocci_invoices; do
+until docker-compose exec postgres pg_isready -U invoices_user -d invoices_db; do
   echo "Waiting for PostgreSQL..."
   sleep 2
 done
@@ -66,10 +66,10 @@ echo "📚 API Documentation will be available at:"
 echo "   http://localhost:3000/api/v1/docs"
 echo ""
 echo "🐰 RabbitMQ Management UI:"
-echo "   http://localhost:15672 (flocci/flocci_password)"
+echo "   http://localhost:15672 (invoices/change_me)"
 echo ""
 echo "🗄️  PostgreSQL Connection:"
 echo "   Host: localhost:5432"
-echo "   Database: flocci_invoices"
-echo "   User: flocci_user"
-echo "   Password: flocci_password"
+echo "   Database: invoices_db"
+echo "   User: invoices_user"
+echo "   Password: change_me"

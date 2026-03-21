@@ -21,14 +21,14 @@ export class RegisterDto {
   password: string;
 
   @ApiProperty({
-    description: 'User role (optional, defaults to viewer)',
+    description: 'User role (optional, defaults to admin for standalone usage)',
     enum: UserRole,
-    default: UserRole.VIEWER,
+    default: UserRole.ADMIN,
     required: false,
   })
   @IsEnum(UserRole)
   @IsOptional()
-  role: UserRole = UserRole.VIEWER;
+  role: UserRole = UserRole.ADMIN;
 
   @ApiProperty({
     description:

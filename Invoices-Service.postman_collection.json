@@ -1,0 +1,316 @@
+{
+  "info": {
+    "_postman_id": "invoices-service-collection",
+    "name": "Invoices Service API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_URL", "value": "http://localhost:3000/api/v1" },
+    { "key": "JWT", "value": "" },
+    { "key": "ORG_ID", "value": "" },
+    { "key": "PARTNER_ID", "value": "" },
+    { "key": "PRODUCT_ID", "value": "" },
+    { "key": "INVOICE_ID", "value": "" },
+    { "key": "PAYMENT_ID", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{BASE_URL}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"StrongPassword123\",\n  \"role\": \"VIEWER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "  pm.environment.set('JWT', jsonData.access_token);",
+                  "  console.log('✅ JWT Token Set:', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{BASE_URL}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"StrongPassword123\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Create Organization",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.organizationId) {",
+                  "  pm.environment.set('ORG_ID', data.organizationId);",
+                  "  console.log('✅ ORG_ID set:', data.organizationId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{JWT}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{BASE_URL}}/organizations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Test Org\",\n  \"gstin\": \"22AAAAA0000A1Z5\",\n  \"pan\": \"AAAAA0000A\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Organizations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations?page=1&limit=10"
+          }
+        }
+      ]
+    },
+    {
+  "name": "Business Partners",
+  "item": [
+    {
+      "name": "Create Partner",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const data = pm.response.json();",
+              "if (data.partnerId) {",
+              "  pm.environment.set('PARTNER_ID', data.partnerId);",
+              "  console.log('✅ PARTNER_ID set:', data.partnerId);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{JWT}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/partners",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Partner A\",\n  \"type\": \"BOTH\",  // Ensure this matches PartnerType enum (e.g., VENDOR, CUSTOMER, BOTH)\n  \"gstin\": \"22AAAAA0000A1Z5\",\n  \"pan\": \"AAAAA0000A\",\n  \"billingAddress\": { \"street\": \"123 Street\", \"city\": \"City\", \"state\": \"State\", \"postalCode\": \"123456\", \"country\": \"India\" },\n  \"shippingAddress\": { \"street\": \"456 Street\", \"city\": \"City\", \"state\": \"State\", \"postalCode\": \"654321\", \"country\": \"India\" }\n}"
+        }
+      }
+    },
+    {
+      "name": "List Partners",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+        "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/partners"
+      }
+    },
+    {
+      "name": "Get Partner by ID",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+        "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/partners/{{PARTNER_ID}}"
+      }
+    },
+    {
+      "name": "Update Partner",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{JWT}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/partners/{{PARTNER_ID}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Partner A Updated\",\n  \"type\": \"CUSTOMER\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Delete Partner",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+        "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/partners/{{PARTNER_ID}}"
+      }
+    }
+  ]
+},
+    {
+      "name": "Products/Services",
+      "item": [
+        {
+          "name": "Create Product/Service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.productId) {",
+                  "  pm.environment.set('PRODUCT_ID', data.productId);",
+                  "  console.log('✅ PRODUCT_ID set:', data.productId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{JWT}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/products-services",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Service Alpha\",\n  \"description\": \"Professional consulting service\",\n  \"unitPrice\": 1000,\n  \"taxRate\": 18\n}"
+            }
+          }
+        },
+        {
+          "name": "List Products/Services",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/products-services"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoices",
+      "item": [
+        {
+          "name": "Create Invoice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.invoiceId) {",
+                  "  pm.environment.set('INVOICE_ID', data.invoiceId);",
+                  "  console.log('✅ INVOICE_ID set:', data.invoiceId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{JWT}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partnerId\": \"{{PARTNER_ID}}\",\n  \"invoiceNumber\": \"INV-001\",\n  \"status\": \"DRAFT\",\n  \"totalAmount\": 1000\n}"
+            }
+          }
+        },
+        {
+          "name": "List Invoices",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices"
+          }
+        },
+        {
+          "name": "Send Invoice",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/invoices/{{INVOICE_ID}}/send"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.paymentId) {",
+                  "  pm.environment.set('PAYMENT_ID', data.paymentId);",
+                  "  console.log('✅ PAYMENT_ID set:', data.paymentId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{JWT}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/payments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoiceId\": \"{{INVOICE_ID}}\",\n  \"amount\": 500,\n  \"paymentMethod\": \"BANK_TRANSFER\",\n  \"transactionReference\": \"TXN-12345\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Payments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{JWT}}" }],
+            "url": "{{BASE_URL}}/organizations/{{ORG_ID}}/payments"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -12,11 +12,11 @@ export class EventService {
     
     // TODO: Implement actual event publishing
     // Example with RabbitMQ:
-    // await this.amqpConnection.publish('flocci.events', eventType, payload);
+    // await this.amqpConnection.publish('invoices.events', eventType, payload);
   }
 
   async publishInvoiceCreated(invoiceId: string, organizationId: string, totalAmount: number): Promise<void> {
-    await this.publishEvent('flocci.invoices.invoice.created', {
+    await this.publishEvent('invoices.invoice.created', {
       invoiceId,
       organizationId,
       totalAmount,
@@ -25,7 +25,7 @@ export class EventService {
   }
 
   async publishInvoiceSent(invoiceId: string, organizationId: string): Promise<void> {
-    await this.publishEvent('flocci.invoices.invoice.sent', {
+    await this.publishEvent('invoices.invoice.sent', {
       invoiceId,
       organizationId,
       timestamp: new Date().toISOString(),
@@ -33,7 +33,7 @@ export class EventService {
   }
 
   async publishPaymentReceived(paymentId: string, invoiceId: string, organizationId: string, amount: number): Promise<void> {
-    await this.publishEvent('flocci.invoices.payment.received', {
+    await this.publishEvent('invoices.payment.received', {
       paymentId,
       invoiceId,
       organizationId,

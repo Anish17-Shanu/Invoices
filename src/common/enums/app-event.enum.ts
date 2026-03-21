@@ -1,4 +1,4 @@
-// flocci-invoices-srv/src/common/enums/app-event.enum.ts
+// invoices-srv/src/common/enums/app-event.enum.ts
 
 export enum AppEvent {
   // ---------- Invoices ----------

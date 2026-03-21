@@ -4,7 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PartnerType } from '../src/common/enums';
 
-describe('Flocci-Invoices Full Product Test (e2e)', () => {
+describe('Invoices Service Full Product Test (e2e)', () => {
   let app: INestApplication;
   let token: string;
   let orgId: string;

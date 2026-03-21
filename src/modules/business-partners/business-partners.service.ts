@@ -27,7 +27,7 @@ export class BusinessPartnersService {
   ) {}
 
   // 🔹 Create a new partner
-  async create(dto: CreateBusinessPartnerDto, user: RequestUser): Promise<BusinessPartnerResponseDto> {
+  async create(dto: CreateBusinessPartnerDto, user: RequestUser, orgId: string): Promise<BusinessPartnerResponseDto> {
     if (dto.gstin) {
       const exists = await this.partnersRepo.findOne({ where: { gstin: dto.gstin } });
       if (exists) throw new BadRequestException('GSTIN already exists');
@@ -53,7 +53,7 @@ export class BusinessPartnersService {
   }
 
   // 🔹 Get all partners with filters, search, pagination
-  async findAll(query: BusinessPartnerQueryDto, user: RequestUser): Promise<BusinessPartnerResponseDto[]> {
+  async findAll(query: BusinessPartnerQueryDto, user: RequestUser, orgId: string): Promise<BusinessPartnerResponseDto[]> {
     const { page = 1, limit = 10, type, search } = query;
 
     const where: any = {};
@@ -71,14 +71,14 @@ export class BusinessPartnersService {
   }
 
   // 🔹 Get single partner by ID
-  async findOne(id: string, user: RequestUser): Promise<BusinessPartnerResponseDto> {
+  async findOne(id: string, user: RequestUser, orgId: string): Promise<BusinessPartnerResponseDto> {
     const partner = await this.partnersRepo.findOne({ where: { partnerId: id } });
     if (!partner) throw new NotFoundException('Partner not found');
     return this.toResponseDto(partner, true);
   }
 
   // 🔹 Update a partner
-  async update(id: string, dto: UpdateBusinessPartnerDto, user: RequestUser): Promise<BusinessPartnerResponseDto> {
+  async update(id: string, dto: UpdateBusinessPartnerDto, user: RequestUser, orgId: string): Promise<BusinessPartnerResponseDto> {
     const partner = await this.partnersRepo.findOne({ where: { partnerId: id } });
     if (!partner) throw new NotFoundException('Partner not found');
 
@@ -98,7 +98,7 @@ export class BusinessPartnersService {
   }
 
   // 🔹 Delete a partner
-  async remove(id: string, user: RequestUser): Promise<void> {
+  async remove(id: string, user: RequestUser, orgId: string): Promise<void> {
     const partner = await this.partnersRepo.findOne({ where: { partnerId: id } });
     if (!partner) throw new NotFoundException('Partner not found');
 

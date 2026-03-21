@@ -1,5 +1,5 @@
 # ==============================
-# Flocci-Invoices Full Test Script
+# Invoices Service Full Test Script
 # ==============================
 
 Write-Host "==============================="

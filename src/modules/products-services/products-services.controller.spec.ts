@@ -15,7 +15,6 @@ describe('ProductsServicesController', () => {
     updateProductService: jest.fn(),
   };
 
-  // ✅ Complete mock user to satisfy RequestUser
   const mockUser: RequestUser = {
     userId: 'u1',
     email: 'test@example.com',
@@ -25,6 +24,8 @@ describe('ProductsServicesController', () => {
     organizationId: 'org-1',
     name: 'Test User',
   };
+
+  const orgId = 'org-1';
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,36 +43,37 @@ describe('ProductsServicesController', () => {
     const dto = { name: 'Laptop' } as any;
     mockService.createProductService.mockResolvedValue({ productId: 'p1', ...dto });
 
-    const result = await controller.create(dto, mockUser);
+    const result = await controller.create(orgId, dto, mockUser);
 
-    expect(service.createProductService).toHaveBeenCalledWith(dto);
+    expect(service.createProductService).toHaveBeenCalledWith(dto, mockUser, orgId);
     expect(result).toEqual(expect.objectContaining({ name: 'Laptop' }));
   });
 
   it('should get all products', async () => {
     mockService.getAllProductServices.mockResolvedValue([{ productId: 'p1', name: 'Mouse' }]);
 
-    const result = await controller.getAll();
+    const result = await controller.getAll(orgId, mockUser);
 
-    expect(service.getAllProductServices).toHaveBeenCalled();
+    expect(service.getAllProductServices).toHaveBeenCalledWith(mockUser, orgId);
     expect(result).toHaveLength(1);
   });
 
   it('should get a product by id', async () => {
     mockService.getProductServiceById.mockResolvedValue({ productId: 'p1', name: 'Keyboard' });
 
-    const result = await controller.getById('p1');
+    const result = await controller.getById(orgId, 'p1', mockUser);
 
-    expect(service.getProductServiceById).toHaveBeenCalledWith('p1');
+    expect(service.getProductServiceById).toHaveBeenCalledWith('p1', mockUser, orgId);
     expect(result).toEqual(expect.objectContaining({ name: 'Keyboard' }));
   });
 
   it('should update a product', async () => {
+    const dto = { name: 'Updated' } as any;
     mockService.updateProductService.mockResolvedValue({ productId: 'p1', name: 'Updated' });
 
-    const result = await controller.update('p1', { name: 'Updated' } as any, mockUser);
+    const result = await controller.update(orgId, 'p1', dto, mockUser);
 
-    expect(service.updateProductService).toHaveBeenCalledWith('p1', { name: 'Updated' });
+    expect(service.updateProductService).toHaveBeenCalledWith('p1', dto, mockUser, orgId);
     expect(result).toEqual(expect.objectContaining({ name: 'Updated' }));
   });
 });

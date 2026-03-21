@@ -1,6 +1,6 @@
-# Flocci Invoices Microservice
+# Invoices Service
 
-A production-ready, multi-tenant invoicing microservice built with NestJS, TypeScript, and PostgreSQL. This service handles all financial transactions in the Flocci ecosystem with full GST compliance for Indian businesses.
+A production-ready, multi-tenant invoicing service built with NestJS, TypeScript, and PostgreSQL. This service handles financial transactions with full GST compliance for Indian businesses.
 
 ## 🚀 Features
 
@@ -38,7 +38,7 @@ A production-ready, multi-tenant invoicing microservice built with NestJS, TypeS
 
 ```bash
 git clone <repository-url>
-cd flocci-invoices-srv
+cd invoices-srv
 cp .env.example .env
 ```
 
@@ -77,7 +77,8 @@ npm run start:prod
 The API will be available at:
 - **API**: http://localhost:3000/api/v1
 - **Swagger Docs**: http://localhost:3000/api/v1/docs
-- **RabbitMQ Management**: http://localhost:15672 (flocci/flocci_password)
+- **Health**: http://localhost:3000/api/v1/health
+- **RabbitMQ Management**: http://localhost:15672 (invoices/change_me)
 
 ## 📁 Project Structure
 
@@ -103,12 +104,23 @@ src/
 
 ## 🔐 Authentication
 
-The service expects JWT tokens from the Flocci OS Gateway with this payload structure:
+The service is fully standalone and does not require any parent platform for authentication.
+
+Use the built-in auth flow:
+- `POST /auth/register` to create a user
+- `POST /auth/login` to receive a JWT
+- `POST /auth/refresh` to rotate an access token with a refresh token
+- `POST /auth/password-reset/request` to start a reset flow
+- `POST /auth/password-reset/confirm` to set a new password with a valid reset token
+- use the JWT in protected routes with `Authorization: Bearer <jwt_token>`
+- standalone registrations default to `admin` so the service is usable immediately
+
+JWT payload structure:
 
 ```json
 {
   "userId": "uuid",
-  "workspaceId": "uuid", 
+  "workspaceId": "uuid",
   "roles": ["admin", "finance_manager", "sales", "viewer"],
   "organizationId": "uuid"
 }
@@ -118,6 +130,18 @@ The service expects JWT tokens from the Flocci OS Gateway with this payload stru
 ```
 Authorization: Bearer <jwt_token>
 ```
+
+### Self-Service Onboarding
+1. Register with email and password.
+2. If no organization ID is provided, one is created automatically.
+3. Save the returned JWT.
+4. Use that token across organization-scoped endpoints.
+
+### Token lifecycle
+- Login and registration now return both `access_token` and `refresh_token`
+- Refresh tokens are signed independently so clients can rotate access safely
+- Password reset is stateless and works without Redis or a third-party auth provider
+- In production, set `PASSWORD_RESET_EXPOSE_TOKEN=false` and deliver reset links through your own email/SMS layer
 
 ## 📊 Database Schema
 
@@ -132,6 +156,14 @@ The service implements the complete SQL schema with:
 - **Compliance**: E-Way Bills and GSTR filings
 
 ## 🔌 API Endpoints
+
+### Auth
+- `POST /auth/register` - Register a user and auto-provision an organization if needed
+- `POST /auth/login` - Log in and receive a JWT
+- `POST /auth/refresh` - Exchange a valid refresh token for a fresh token pair
+- `POST /auth/password-reset/request` - Create a reset token for a user
+- `POST /auth/password-reset/confirm` - Set a new password using a reset token
+- `GET /api/v1/health` - Public health check
 
 ### Organizations
 - `POST /organizations` - Create organization
@@ -170,17 +202,17 @@ The service implements the complete SQL schema with:
 
 ## 📨 Event Publishing
 
-The service publishes events for integration with other Flocci services:
+The service publishes events for integration with other services:
 
 ```typescript
 // Invoice events
-'flocci.invoices.invoice.created'
-'flocci.invoices.invoice.sent'
-'flocci.invoices.invoice.paid'
+'invoices.invoice.created'
+'invoices.invoice.sent'
+'invoices.invoice.paid'
 
 // Payment events  
-'flocci.invoices.payment.received'
-'flocci.invoices.payment.failed'
+'invoices.payment.received'
+'invoices.payment.failed'
 ```
 
 ## 🧪 Testing
@@ -215,11 +247,20 @@ JWT_SECRET=<strong-production-secret>
 LOG_LEVEL=warn
 ```
 
+Important:
+- the service now validates critical environment variables at startup
+- `JWT_SECRET` is required in all modes
+- `JWT_REFRESH_SECRET` and `PASSWORD_RESET_SECRET` are required in production
+- database connection values are required in production
+- the service does not depend on an external platform to authenticate users
+- set `CORS_ORIGIN` to the client or integration origin you want to allow
+- auth endpoints now have built-in in-memory rate limiting to reduce brute-force abuse
+
 ### Docker Production Build
 
 ```bash
-docker build -t flocci-invoices-srv .
-docker run -p 3000:3000 --env-file .env.production flocci-invoices-srv
+docker build -t invoices-srv .
+docker run -p 3000:3000 --env-file .env.production invoices-srv
 ```
 
 ## 🤝 Contributing
@@ -231,11 +272,11 @@ docker run -p 3000:3000 --env-file .env.production flocci-invoices-srv
 
 ## 📄 License
 
-This project is proprietary to Flocci. All rights reserved.
+This project is private. All rights reserved.
 
 ## 🆘 Support
 
 For issues or questions:
 - Create an issue in the repository
-- Contact the Flocci development team
+- Contact the project maintainer
 - Check the API documentation at `/api/v1/docs`

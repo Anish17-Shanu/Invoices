@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Health check script for flocci-invoices-srv
+# Health check script for invoices-srv
 
-echo "🔍 Checking Flocci Invoices Service Health..."
+echo "🔍 Checking Invoices Service Health..."
 
 # Check TypeScript compilation
 echo "📝 Checking TypeScript compilation..."
@@ -46,7 +46,7 @@ done
 
 echo ""
 echo "🎉 All health checks passed!"
-echo "🚀 Your Flocci Invoices Service is ready to run!"
+echo "🚀 Your Invoices Service is ready to run!"
 echo ""
 echo "Next steps:"
 echo "1. Start services: docker-compose up -d"

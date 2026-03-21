@@ -68,7 +68,12 @@ export class AuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (orgParam && request.params?.[orgParam] && user.organizationId !== request.params[orgParam]) {
+    if (
+      orgParam &&
+      request.params?.[orgParam] &&
+      user.role !== UserRole.SUPER_ADMIN &&
+      user.organizationId !== request.params[orgParam]
+    ) {
       throw new ForbiddenException('Access to this organization is forbidden');
     }
 
