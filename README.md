@@ -1,8 +1,13 @@
 # Invoices Service
 
+## Creator
+
+This project was created, written, and maintained by **Anish Kumar (ANISH KUMAR)**.
+All primary documentation in this README is presented as the work of **Anish Kumar**.
+
 A production-ready, multi-tenant invoicing service built with NestJS, TypeScript, and PostgreSQL. This service handles financial transactions with full GST compliance for Indian businesses.
 
-## 🚀 Features
+## ðŸš€ Features
 
 - **Multi-tenant Architecture**: Complete isolation between organizations
 - **GST Compliance**: Built-in support for Indian GST regulations
@@ -13,7 +18,7 @@ A production-ready, multi-tenant invoicing service built with NestJS, TypeScript
 - **Event-driven Architecture**: RabbitMQ integration for real-time events
 - **Production Ready**: Docker containerization, logging, monitoring
 
-## 🛠 Tech Stack
+## ðŸ›  Tech Stack
 
 - **Framework**: NestJS (Node.js/TypeScript)
 - **Database**: PostgreSQL with TypeORM
@@ -25,14 +30,14 @@ A production-ready, multi-tenant invoicing service built with NestJS, TypeScript
 - **Testing**: Jest
 - **Logging**: Winston
 
-## 📋 Prerequisites
+## ðŸ“‹ Prerequisites
 
 - Node.js 18+ 
 - Docker & Docker Compose
 - PostgreSQL 15+
 - RabbitMQ 3.8+
 
-## 🚀 Quick Start
+## ðŸš€ Quick Start
 
 ### 1. Clone and Setup
 
@@ -80,29 +85,29 @@ The API will be available at:
 - **Health**: http://localhost:3000/api/v1/health
 - **RabbitMQ Management**: http://localhost:15672 (invoices/change_me)
 
-## 📁 Project Structure
+## ðŸ“ Project Structure
 
 ```
 src/
-├── common/                 # Shared utilities
-│   ├── decorators/        # Custom decorators
-│   ├── enums/             # TypeScript enums
-│   ├── filters/           # Exception filters
-│   ├── guards/            # Authentication guards
-│   └── interfaces/        # TypeScript interfaces
-├── config/                # Configuration files
-├── core/                  # Core module setup
-├── entities/              # TypeORM entities
-└── modules/               # Feature modules
-    ├── organizations/     # Organization management
-    ├── business-partners/ # Customer/vendor management
-    ├── products-services/ # Product catalog
-    ├── invoices/         # Invoice management
-    ├── payments/         # Payment processing
-    └── compliance/       # GST compliance
+â”œâ”€â”€ common/                 # Shared utilities
+â”‚   â”œâ”€â”€ decorators/        # Custom decorators
+â”‚   â”œâ”€â”€ enums/             # TypeScript enums
+â”‚   â”œâ”€â”€ filters/           # Exception filters
+â”‚   â”œâ”€â”€ guards/            # Authentication guards
+â”‚   â””â”€â”€ interfaces/        # TypeScript interfaces
+â”œâ”€â”€ config/                # Configuration files
+â”œâ”€â”€ core/                  # Core module setup
+â”œâ”€â”€ entities/              # TypeORM entities
+â””â”€â”€ modules/               # Feature modules
+    â”œâ”€â”€ organizations/     # Organization management
+    â”œâ”€â”€ business-partners/ # Customer/vendor management
+    â”œâ”€â”€ products-services/ # Product catalog
+    â”œâ”€â”€ invoices/         # Invoice management
+    â”œâ”€â”€ payments/         # Payment processing
+    â””â”€â”€ compliance/       # GST compliance
 ```
 
-## 🔐 Authentication
+## ðŸ” Authentication
 
 The service is fully standalone and does not require any parent platform for authentication.
 
@@ -143,7 +148,7 @@ Authorization: Bearer <jwt_token>
 - Password reset is stateless and works without Redis or a third-party auth provider
 - In production, set `PASSWORD_RESET_EXPOSE_TOKEN=false` and deliver reset links through your own email/SMS layer
 
-## 📊 Database Schema
+## ðŸ“Š Database Schema
 
 The service implements the complete SQL schema with:
 
@@ -155,7 +160,7 @@ The service implements the complete SQL schema with:
 - **Payments**: Payment tracking and reconciliation
 - **Compliance**: E-Way Bills and GSTR filings
 
-## 🔌 API Endpoints
+## ðŸ”Œ API Endpoints
 
 ### Auth
 - `POST /auth/register` - Register a user and auto-provision an organization if needed
@@ -191,7 +196,7 @@ The service implements the complete SQL schema with:
 - `POST /organizations/:orgId/invoices/:invoiceId/ewaybill` - Generate E-Way Bill
 - `POST /organizations/:orgId/gstr/generate` - Generate GSTR filing
 
-## 🎯 Role-Based Access Control
+## ðŸŽ¯ Role-Based Access Control
 
 | Role | Permissions |
 |------|-------------|
@@ -200,7 +205,7 @@ The service implements the complete SQL schema with:
 | **sales** | Create/update invoices, view reports |
 | **viewer** | Read-only access |
 
-## 📨 Event Publishing
+## ðŸ“¨ Event Publishing
 
 The service publishes events for integration with other services:
 
@@ -215,7 +220,7 @@ The service publishes events for integration with other services:
 'invoices.payment.failed'
 ```
 
-## 🧪 Testing
+## ðŸ§ª Testing
 
 ```bash
 # Unit tests
@@ -228,14 +233,14 @@ npm run test:e2e
 npm run test:cov
 ```
 
-## 📈 Monitoring & Logging
+## ðŸ“ˆ Monitoring & Logging
 
 - **Structured Logging**: JSON format with Winston
 - **Health Checks**: Built-in health check endpoint
 - **Metrics**: Request/response logging with correlation IDs
 - **Error Tracking**: Global exception filter with detailed error responses
 
-## 🚀 Deployment
+## ðŸš€ Deployment
 
 ### Production Environment Variables
 
@@ -263,18 +268,18 @@ docker build -t invoices-srv .
 docker run -p 3000:3000 --env-file .env.production invoices-srv
 ```
 
-## 🤝 Contributing
+## ðŸ¤ Contributing
 
 1. Follow the existing code style (ESLint/Prettier configured)
 2. Write tests for new features
 3. Update documentation for API changes
 4. Use conventional commit messages
 
-## 📄 License
+## ðŸ“„ License
 
 This project is private. All rights reserved.
 
-## 🆘 Support
+## ðŸ†˜ Support
 
 For issues or questions:
 - Create an issue in the repository
