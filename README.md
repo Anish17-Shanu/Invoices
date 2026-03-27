@@ -2,12 +2,12 @@
 
 ## Creator
 
-This project was created, written, and maintained by **Anish Kumar (ANISH KUMAR)**.
-All primary documentation in this README is presented as the work of **Anish Kumar**.
+This project was created, written, and maintained by **ANISH KUMAR**.
+All primary documentation in this README is presented as the work of **ANISH KUMAR**.
 
 A production-ready, multi-tenant invoicing service built with NestJS, TypeScript, and PostgreSQL. This service handles financial transactions with full GST compliance for Indian businesses.
 
-## ðŸš€ Features
+## Ã°Å¸Å¡â‚¬ Features
 
 - **Multi-tenant Architecture**: Complete isolation between organizations
 - **GST Compliance**: Built-in support for Indian GST regulations
@@ -18,7 +18,7 @@ A production-ready, multi-tenant invoicing service built with NestJS, TypeScript
 - **Event-driven Architecture**: RabbitMQ integration for real-time events
 - **Production Ready**: Docker containerization, logging, monitoring
 
-## ðŸ›  Tech Stack
+## Ã°Å¸â€ºÂ  Tech Stack
 
 - **Framework**: NestJS (Node.js/TypeScript)
 - **Database**: PostgreSQL with TypeORM
@@ -30,14 +30,14 @@ A production-ready, multi-tenant invoicing service built with NestJS, TypeScript
 - **Testing**: Jest
 - **Logging**: Winston
 
-## ðŸ“‹ Prerequisites
+## Ã°Å¸â€œâ€¹ Prerequisites
 
 - Node.js 18+ 
 - Docker & Docker Compose
 - PostgreSQL 15+
 - RabbitMQ 3.8+
 
-## ðŸš€ Quick Start
+## Ã°Å¸Å¡â‚¬ Quick Start
 
 ### 1. Clone and Setup
 
@@ -85,29 +85,29 @@ The API will be available at:
 - **Health**: http://localhost:3000/api/v1/health
 - **RabbitMQ Management**: http://localhost:15672 (invoices/change_me)
 
-## ðŸ“ Project Structure
+## Ã°Å¸â€œÂ Project Structure
 
 ```
 src/
-â”œâ”€â”€ common/                 # Shared utilities
-â”‚   â”œâ”€â”€ decorators/        # Custom decorators
-â”‚   â”œâ”€â”€ enums/             # TypeScript enums
-â”‚   â”œâ”€â”€ filters/           # Exception filters
-â”‚   â”œâ”€â”€ guards/            # Authentication guards
-â”‚   â””â”€â”€ interfaces/        # TypeScript interfaces
-â”œâ”€â”€ config/                # Configuration files
-â”œâ”€â”€ core/                  # Core module setup
-â”œâ”€â”€ entities/              # TypeORM entities
-â””â”€â”€ modules/               # Feature modules
-    â”œâ”€â”€ organizations/     # Organization management
-    â”œâ”€â”€ business-partners/ # Customer/vendor management
-    â”œâ”€â”€ products-services/ # Product catalog
-    â”œâ”€â”€ invoices/         # Invoice management
-    â”œâ”€â”€ payments/         # Payment processing
-    â””â”€â”€ compliance/       # GST compliance
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ common/                 # Shared utilities
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ decorators/        # Custom decorators
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ enums/             # TypeScript enums
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ filters/           # Exception filters
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ guards/            # Authentication guards
+Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ interfaces/        # TypeScript interfaces
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ config/                # Configuration files
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ core/                  # Core module setup
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ entities/              # TypeORM entities
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ modules/               # Feature modules
+    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ organizations/     # Organization management
+    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ business-partners/ # Customer/vendor management
+    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ products-services/ # Product catalog
+    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ invoices/         # Invoice management
+    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ payments/         # Payment processing
+    Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ compliance/       # GST compliance
 ```
 
-## ðŸ” Authentication
+## Ã°Å¸â€Â Authentication
 
 The service is fully standalone and does not require any parent platform for authentication.
 
@@ -148,7 +148,7 @@ Authorization: Bearer <jwt_token>
 - Password reset is stateless and works without Redis or a third-party auth provider
 - In production, set `PASSWORD_RESET_EXPOSE_TOKEN=false` and deliver reset links through your own email/SMS layer
 
-## ðŸ“Š Database Schema
+## Ã°Å¸â€œÅ  Database Schema
 
 The service implements the complete SQL schema with:
 
@@ -160,7 +160,7 @@ The service implements the complete SQL schema with:
 - **Payments**: Payment tracking and reconciliation
 - **Compliance**: E-Way Bills and GSTR filings
 
-## ðŸ”Œ API Endpoints
+## Ã°Å¸â€Å’ API Endpoints
 
 ### Auth
 - `POST /auth/register` - Register a user and auto-provision an organization if needed
@@ -196,7 +196,7 @@ The service implements the complete SQL schema with:
 - `POST /organizations/:orgId/invoices/:invoiceId/ewaybill` - Generate E-Way Bill
 - `POST /organizations/:orgId/gstr/generate` - Generate GSTR filing
 
-## ðŸŽ¯ Role-Based Access Control
+## Ã°Å¸Å½Â¯ Role-Based Access Control
 
 | Role | Permissions |
 |------|-------------|
@@ -205,7 +205,7 @@ The service implements the complete SQL schema with:
 | **sales** | Create/update invoices, view reports |
 | **viewer** | Read-only access |
 
-## ðŸ“¨ Event Publishing
+## Ã°Å¸â€œÂ¨ Event Publishing
 
 The service publishes events for integration with other services:
 
@@ -220,7 +220,7 @@ The service publishes events for integration with other services:
 'invoices.payment.failed'
 ```
 
-## ðŸ§ª Testing
+## Ã°Å¸Â§Âª Testing
 
 ```bash
 # Unit tests
@@ -233,14 +233,14 @@ npm run test:e2e
 npm run test:cov
 ```
 
-## ðŸ“ˆ Monitoring & Logging
+## Ã°Å¸â€œË† Monitoring & Logging
 
 - **Structured Logging**: JSON format with Winston
 - **Health Checks**: Built-in health check endpoint
 - **Metrics**: Request/response logging with correlation IDs
 - **Error Tracking**: Global exception filter with detailed error responses
 
-## ðŸš€ Deployment
+## Ã°Å¸Å¡â‚¬ Deployment
 
 ### Production Environment Variables
 
@@ -268,18 +268,18 @@ docker build -t invoices-srv .
 docker run -p 3000:3000 --env-file .env.production invoices-srv
 ```
 
-## ðŸ¤ Contributing
+## Ã°Å¸Â¤Â Contributing
 
 1. Follow the existing code style (ESLint/Prettier configured)
 2. Write tests for new features
 3. Update documentation for API changes
 4. Use conventional commit messages
 
-## ðŸ“„ License
+## Ã°Å¸â€œâ€ž License
 
 This project is private. All rights reserved.
 
-## ðŸ†˜ Support
+## Ã°Å¸â€ Ëœ Support
 
 For issues or questions:
 - Create an issue in the repository
