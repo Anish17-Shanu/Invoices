@@ -2,8 +2,8 @@
 
 ## Creator
 
-This project was created, written, and maintained by **ANISH KUMAR**.
-All primary documentation in this README is presented as the work of **ANISH KUMAR**.
+This project was created, written, and maintained by **Anish Kumar**.
+All primary documentation in this README is presented as the work of **Anish Kumar**.
 
 A production-ready, multi-tenant invoicing service built with NestJS, TypeScript, and PostgreSQL. This service handles financial transactions with full GST compliance for Indian businesses.
 

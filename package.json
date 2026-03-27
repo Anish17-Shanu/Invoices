@@ -2,7 +2,7 @@
   "name": "invoices-srv",
   "version": "1.0.0",
   "description": "Standalone invoices service for multi-tenant GST-compliant invoicing",
-  "author": "ANISH KUMAR",
+  "author": "Anish Kumar",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
